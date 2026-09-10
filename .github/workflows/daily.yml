@@ -35,7 +35,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data reports docs
+          # 用 -A 让 git 自己遵守 .gitignore；
+          # 直接写 "git add data reports docs" 会因为 reports/ 被忽略而报错退出
+          git add -A
           if git diff --cached --quiet; then
             echo "没有变化，跳过提交"
           else
