@@ -42,5 +42,7 @@ jobs:
             echo "没有变化，跳过提交"
           else
             git commit -m "daily: $(date -u +%F)"
+            # 万一这段时间有人推了代码，先变基再推，避免 push 被拒
+            git pull --rebase --autostash origin main || true
             git push
           fi
