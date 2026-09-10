@@ -8,9 +8,12 @@ Page({
     error: "",
     tradeDate: "",
     sector: null,
+    all: [],
     stocks: [],
-    catalyst: null,
-    sortMode: "valuation",
+    license: null,
+    highlights: [],
+    sortMode: "pct",
+    market: "all",
   },
 
   onLoad() {
@@ -25,20 +28,24 @@ Page({
     this.setData({ error: "" });
     try {
       const r = await call("dashboard");
-      const focus = r.focus || [];
-      const stocks = (r.stocks || [])
+      const focus = (r.focus || []).concat(r.hkFocus || []);
+      const all = (r.stocks || [])
+        .concat(r.hkStocks || [])
         .map((s) => {
           const d = fmt.decorateStock(s);
           d.isFocus = focus.indexOf(s.code) >= 0;
+          d.isHk = s.market === "HK";
           return d;
-        })
-        .sort(this.comparator(this.data.sortMode));
+        });
       this.setData({
         loading: false,
         tradeDate: r.tradeDate,
         sector: this.decorateSector(r.sector),
-        stocks,
+        all,
+        license: r.license && r.license.ok ? r.license : null,
+        highlights: (r.highlights || []).slice(0, 6),
       });
+      this.applyFilter();
       return r;
     } catch (e) {
       this.setData({ loading: false, error: e.message || "加载失败" });
@@ -53,7 +60,6 @@ Page({
       priceText: fmt.price(s.index && s.index.price),
       chg5Text: fmt.sign(s.chg5),
       chg20Text: fmt.sign(s.chg20),
-      distMa60Text: fmt.sign(s.distToMa60Pct),
       distMa250Text: fmt.sign(s.distToMa250Pct),
       aboveMa250Text:
         s.trendBreadth && s.trendBreadth.ma250Total
@@ -67,14 +73,18 @@ Page({
     });
   },
 
+  applyFilter() {
+    const { all, market, sortMode } = this.data;
+    let list = all;
+    if (market === "A") list = all.filter((s) => !s.isHk);
+    else if (market === "HK") list = all.filter((s) => s.isHk);
+    else if (market === "focus") list = all.filter((s) => s.isFocus);
+    this.setData({ stocks: list.slice().sort(this.comparator(sortMode)) });
+  },
+
   comparator(mode) {
-    if (mode === "change") {
-      return (a, b) => (b.chgPct || 0) - (a.chgPct || 0);
-    }
-    if (mode === "cap") {
-      return (a, b) => (b.totalCap || 0) - (a.totalCap || 0);
-    }
-    // 默认按估值分位从低到高，重点票始终置顶
+    if (mode === "chg") return (a, b) => (b.chgPct || 0) - (a.chgPct || 0);
+    if (mode === "cap") return (a, b) => (b.totalCap || 0) - (a.totalCap || 0);
     return (a, b) => {
       if (a.isFocus !== b.isFocus) return a.isFocus ? -1 : 1;
       const pa = a.valuation && a.valuation.ok ? a.valuation.compositePct : 999;
@@ -84,11 +94,13 @@ Page({
   },
 
   onSort(e) {
-    const mode = e.currentTarget.dataset.mode;
-    this.setData({
-      sortMode: mode,
-      stocks: this.data.stocks.slice().sort(this.comparator(mode)),
-    });
+    this.setData({ sortMode: e.currentTarget.dataset.mode });
+    this.applyFilter();
+  },
+
+  onMarket(e) {
+    this.setData({ market: e.currentTarget.dataset.mode });
+    this.applyFilter();
   },
 
   onStock(e) {
@@ -102,11 +114,14 @@ Page({
   async onSync() {
     if (this.data.syncing) return;
     this.setData({ syncing: true });
-    wx.showLoading({ title: "抓取中，约 30 秒", mask: true });
+    wx.showLoading({ title: "抓取中，约 40 秒", mask: true });
     try {
       const r = await call("refresh");
       wx.hideLoading();
-      wx.showToast({ title: `已更新 ${r.stocks} 只`, icon: "success" });
+      wx.showToast({
+        title: `已更新 ${r.stocks}+${r.hkStocks} 只`,
+        icon: "success",
+      });
       await this.load();
     } catch (e) {
       wx.hideLoading();

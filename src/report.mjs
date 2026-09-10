@@ -27,25 +27,57 @@ const padL = (s, n) => {
   const t = String(s ?? "-");
   return " ".repeat(Math.max(0, n - dispWidth(t))) + t;
 };
+
 const f2 = (v) => (v == null || !Number.isFinite(v) ? "-" : Number(v).toFixed(2));
+const f3 = (v) => (v == null || !Number.isFinite(v) ? "-" : Number(v).toFixed(3));
 const fp = (v) => (v == null || !Number.isFinite(v) ? "-" : `${v}%`);
 const sign = (v) => (v == null || !Number.isFinite(v) ? "-" : v > 0 ? `+${v}` : `${v}`);
+/** 港股低价股需要 3 位小数，正常的用 2 位 */
+const px = (v, market) => {
+  if (v == null || !Number.isFinite(v)) return "-";
+  if (market === "HK") return Math.abs(v) < 10 ? v.toFixed(3) : v.toFixed(2);
+  return v.toFixed(2);
+};
+/** 优先用 PE(TTM)，港股没有 TTM 时退回动态 PE */
+const peOf = (s) => {
+  const v = s.peTtm ?? s.peDyn;
+  return v == null || !Number.isFinite(v) ? "-" : Number(v).toFixed(1);
+};
+const cap = (v) => (v ? `${(v / 1e8).toFixed(0)}亿` : "-");
+const statusOf = (s) => (s.status && s.status.label) || "-";
 
-function statusOf(s) {
-  return (s.status && s.status.label) || "-";
+const METHOD_LABEL = { valuation: "估值分位", price: "价格分位" };
+
+function stockRow(s) {
+  if (s.error) return `| ${s.name} | - | - | - | - | - | - | 抓取失败 |`;
+  const m = s.market === "HK" ? "HK" : "A";
+  return (
+    `| ${s.name}（${m}） | ${px(s.price, s.market)} | ${sign(s.chgPct)}% | ` +
+    `${peOf(s)} | ` +
+    `${fp(s.valuation?.compositePct)} | ${s.bands ? px(s.bands.addPrice, s.market) : "-"} | ` +
+    `${s.bands ? px(s.bands.trimPrice, s.market) : "-"} | ${statusOf(s)} |`
+  );
 }
+
+const TABLE_HEAD = [
+  "| 名称 | 现价 | 涨跌 | PE | 历史分位 | 加仓价 | 减仓价 | 状态 |",
+  "|---|---:|---:|---:|---:|---:|---:|---|",
+];
 
 /** 每日 Markdown 日报，归档到 reports/ */
 export function buildMarkdown(snap) {
-  const { sector, stocks, tradeDate } = snap;
+  const { sector, stocks = [], hkStocks = [], catalysts = {}, tradeDate } = snap;
   const L = [];
 
   L.push(`# 喜好跟踪 · ${tradeDate}`);
   L.push("");
-  L.push(`> 生成时间 ${new Date(snap.generatedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`);
+  L.push(
+    `> 生成时间 ${new Date(snap.generatedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}` +
+      `　A股 ${stocks.length} 只　港股 ${hkStocks.length} 只`
+  );
   L.push("");
 
-  L.push("## 整体概况");
+  L.push("## 整体概况（A股游戏板块）");
   L.push("");
   L.push(
     `- 指数 ${sector.index.name} **${f2(sector.index.price)}**（${sign(sector.index.chgPct)}%）` +
@@ -61,54 +93,120 @@ export function buildMarkdown(snap) {
   );
   L.push("");
 
-  L.push("## 跟踪列表");
-  L.push("");
-  L.push("| 名称 | 现价 | 涨跌 | PE(TTM) | 历史分位 | 加仓价 | 减仓价 | 状态 |");
-  L.push("|---|---:|---:|---:|---:|---:|---:|---|");
-  for (const s of stocks) {
-    if (s.error) {
-      L.push(`| ${s.name} | - | - | - | - | - | - | 抓取失败 |`);
-      continue;
-    }
-    L.push(
-      `| ${s.name} | ${f2(s.price)} | ${sign(s.chgPct)}% | ${s.peTtm == null ? "-" : s.peTtm.toFixed(1)} | ` +
-        `${fp(s.valuation?.compositePct)} | ${s.bands ? f2(s.bands.addPrice) : "-"} | ` +
-        `${s.bands ? f2(s.bands.trimPrice) : "-"} | ${statusOf(s)} |`
-    );
-  }
+  L.push("## 催化剂");
   L.push("");
 
-  const cheap = stocks.filter((s) => s.valuation?.ok && s.valuation.compositePct < 30);
-  const rich = stocks.filter((s) => s.valuation?.ok && s.valuation.compositePct > 70);
+  const lic = catalysts.license;
+  if (lic?.ok && lic.months?.length) {
+    const latest = lic.months[0];
+    L.push(`### 版号公示`);
+    L.push("");
+    L.push(`最近一次：**${latest.title}**（${latest.publishDate}，共 ${latest.total ?? "-"} 款）`);
+    L.push("");
+    if (lic.matched?.length) {
+      L.push("跟踪范围内命中：");
+      L.push("");
+      for (const m of lic.matched) {
+        L.push(
+          `- ${m.date}　**《${m.name}》**　${m.companyName || ""}（${m.matchedField}：${m.matchedEntity}）`
+        );
+      }
+    } else {
+      L.push("最近两个月的公示里，没有匹配到跟踪范围的公司。");
+    }
+    L.push("");
+  }
+
+  const pipe = catalysts.pipeline || [];
+  if (pipe.length) {
+    L.push("### 产品管线（人工维护）");
+    L.push("");
+    for (const p of pipe) {
+      const when =
+        p.expectedDate == null
+          ? "时间待定"
+          : p.daysAway == null
+            ? p.expectedDate
+            : `${p.expectedDate}（${p.daysAway >= 0 ? `${p.daysAway} 天后` : `已过 ${-p.daysAway} 天`}）`;
+      L.push(
+        `- ${p.soon ? "🔔 " : ""}**${p.product}**　${p.companyName || p.company || ""}　` +
+          `${p.stage || ""}　${when}${p.note ? `　${p.note}` : ""}`
+      );
+    }
+    L.push("");
+  }
+
+  const hl = catalysts.highlights || [];
+  if (hl.length) {
+    L.push("### 近期动态（标题关键词扫描）");
+    L.push("");
+    for (const h of hl.slice(0, 12)) {
+      L.push(`- ${h.date}　[${h.kind}] ${h.title}${h.tags?.length ? `　（${h.tags.join("/")}）` : ""}`);
+    }
+    L.push("");
+  }
+
+  L.push("## A股跟踪列表");
+  L.push("");
+  L.push(...TABLE_HEAD);
+  for (const s of stocks) L.push(stockRow(s));
+  L.push("");
+
+  L.push("## 港股跟踪列表");
+  L.push("");
+  L.push("> 港股没有免费的历史估值数据，区间用「价格分位」口径（加仓价 = 近 5 年价格的 30 分位，减仓价 = 70 分位）。");
+  L.push("");
+  L.push(...TABLE_HEAD);
+  for (const s of hkStocks) L.push(stockRow(s));
+  L.push("");
+
+  const all = [...stocks, ...hkStocks];
+  const cheap = all.filter((s) => s.valuation?.ok && s.valuation.compositePct < 30);
+  const rich = all.filter((s) => s.valuation?.ok && s.valuation.compositePct > 70);
   L.push("## 分区");
   L.push("");
-  L.push(`**低位区（分位 < 30%）**：${cheap.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无"}`);
+  L.push(
+    `**低位区（分位 < 30%）**：` +
+      (cheap.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无")
+  );
   L.push("");
-  L.push(`**高位区（分位 > 70%）**：${rich.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无"}`);
+  L.push(
+    `**高位区（分位 > 70%）**：` +
+      (rich.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无")
+  );
   L.push("");
 
-  L.push(`## 重点跟踪（${CONFIG.focus.join("、")}）`);
+  L.push("## 重点跟踪");
   L.push("");
-  for (const code of CONFIG.focus) {
-    const s = stocks.find((x) => x.code === code);
-    if (!s || s.error) continue;
+  const focusList = [
+    ...CONFIG.focus.map((code) => stocks.find((x) => x.code === code)),
+    ...(CONFIG.hkFocus || []).map((code) => hkStocks.find((x) => x.code === code)),
+  ].filter(Boolean);
+
+  for (const s of focusList) {
+    if (s.error) continue;
     L.push(`### ${s.name}（${s.code}）`);
     L.push("");
-    L.push(`- 现价 ${f2(s.price)}（${sign(s.chgPct)}%）｜ 总市值 ${(s.totalCap / 1e8).toFixed(0)} 亿`);
     L.push(
-      `- 历史分位 **${fp(s.valuation.compositePct)}**` +
-        `（PE ${fp(s.valuation.pePct)} / PB ${fp(s.valuation.pbPct)} / PS ${fp(s.valuation.psPct)}）`
+      `- 现价 ${px(s.price, s.market)}（${sign(s.chgPct)}%）｜ 总市值 ${cap(s.totalCap)}` +
+        `｜ 区间口径 ${METHOD_LABEL[s.valuation?.method] || "-"}`
     );
+    L.push(`- 历史分位 **${fp(s.valuation?.compositePct)}**`);
+    if (s.valuation?.pePct != null || s.valuation?.pbPct != null) {
+      L.push(
+        `  - PE 分位 ${fp(s.valuation.pePct)}　PB 分位 ${fp(s.valuation.pbPct)}　PS 分位 ${fp(s.valuation.psPct)}`
+      );
+    }
     if (s.bands) {
       L.push(
-        `- 加仓价 **${f2(s.bands.addPrice)}**（区间 ${f2(s.bands.addLow)} ~ ${f2(s.bands.addHigh)}）｜ ` +
-          `减仓价 **${f2(s.bands.trimPrice)}**（区间 ${f2(s.bands.trimLow)} ~ ${f2(s.bands.trimHigh)}）`
+        `- 加仓价 **${px(s.bands.addPrice, s.market)}**（${px(s.bands.addLow, s.market)} ~ ${px(s.bands.addHigh, s.market)}）` +
+          `｜ 减仓价 **${px(s.bands.trimPrice, s.market)}**（${px(s.bands.trimLow, s.market)} ~ ${px(s.bands.trimHigh, s.market)}）`
       );
       L.push(
-        `- 现价距加仓价 ${sign(s.bands.toAddPricePct)}% ｜ 距减仓价 ${sign(s.bands.toTrimPricePct)}%`
+        `- 现价距加仓价 ${sign(s.bands.toAddPricePct)}%　距减仓价 ${sign(s.bands.toTrimPricePct)}%`
       );
     } else {
-      L.push(`- 区间：${s.valuation.reason || "数据不足"}`);
+      L.push(`- 区间：${s.valuation?.reason || "数据不足"}`);
     }
     if (s.consensus) {
       L.push(
@@ -118,12 +216,10 @@ export function buildMarkdown(snap) {
           ` ｜ 趋势 ${({ up: "上调", down: "下调", flat: "持平" })[s.consensus.revTrend] || "-"}`
       );
     }
-    if (s.invalidations?.length) {
-      L.push(`- **区间失效条件**：${s.invalidations.join("；")}`);
-    }
+    if (s.invalidations?.length) L.push(`- **区间失效条件**：${s.invalidations.join("；")}`);
     L.push("");
 
-    const d = snap.details?.[code];
+    const d = snap.details?.[s.code];
     if (d?.announcements?.length) {
       L.push(`公告（近 ${CONFIG.report.announcementLookbackDays} 天）：`);
       L.push("");
@@ -149,18 +245,17 @@ export function buildMarkdown(snap) {
     L.push("");
   }
 
-  if (snap.catalysts?.length) {
+  const cal = catalysts.calendar || [];
+  if (cal.length) {
     L.push("## 日程提醒");
     L.push("");
-    for (const c of snap.catalysts) {
-      L.push(`- ${c.date}（${c.daysAway} 天后）**${c.title}** — ${c.note}`);
-    }
+    for (const c of cal) L.push(`- ${c.date}（${c.daysAway} 天后）**${c.title}** — ${c.note}`);
     L.push("");
   }
 
   L.push("---");
   L.push("");
-  L.push("区间由历史估值分位反推，仅作跟踪记录，不构成投资建议。");
+  L.push("A 股区间由历史估值分位反推，港股区间由历史价格分位反推。仅作跟踪记录，不构成投资建议。");
   L.push("");
 
   return L.join("\n");
@@ -168,9 +263,10 @@ export function buildMarkdown(snap) {
 
 /** 推送用的精简文案 */
 export function buildPushText(snap) {
-  const { sector, stocks, tradeDate } = snap;
-  const cheap = stocks.filter((s) => s.valuation?.ok && s.valuation.compositePct < 30);
-  const rich = stocks.filter((s) => s.valuation?.ok && s.valuation.compositePct > 70);
+  const { sector, stocks = [], hkStocks = [], catalysts = {}, tradeDate } = snap;
+  const all = [...stocks, ...hkStocks];
+  const cheap = all.filter((s) => s.valuation?.ok && s.valuation.compositePct < 30);
+  const rich = all.filter((s) => s.valuation?.ok && s.valuation.compositePct > 70);
   const L = [];
 
   L.push(`**${sector.index.name} ${f2(sector.index.price)}**　${sign(sector.index.chgPct)}%`);
@@ -179,6 +275,7 @@ export function buildPushText(snap) {
       `${sector.breadth.up}涨${sector.breadth.down}跌`
   );
   L.push("");
+
   L.push(
     `**低位区（${cheap.length}）**　` +
       (cheap.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无")
@@ -193,8 +290,16 @@ export function buildPushText(snap) {
     const s = stocks.find((x) => x.code === code);
     if (!s || s.error) continue;
     focusLines.push(
-      `**${s.name}** ${f2(s.price)}　分位 ${fp(s.valuation.compositePct)}　` +
-        (s.bands ? `加仓 ${f2(s.bands.addPrice)} / 减仓 ${f2(s.bands.trimPrice)}` : "区间不足")
+      `**${s.name}** ${px(s.price, s.market)}　分位 ${fp(s.valuation?.compositePct)}　` +
+        (s.bands ? `加仓 ${px(s.bands.addPrice, s.market)} / 减仓 ${px(s.bands.trimPrice, s.market)}` : "区间不足")
+    );
+  }
+  for (const code of CONFIG.hkFocus || []) {
+    const s = hkStocks.find((x) => x.code === code);
+    if (!s || s.error) continue;
+    focusLines.push(
+      `**${s.name}** ${px(s.price, "HK")}　分位 ${fp(s.valuation?.compositePct)}　` +
+        (s.bands ? `加仓 ${px(s.bands.addPrice, "HK")} / 减仓 ${px(s.bands.trimPrice, "HK")}` : "区间不足")
     );
   }
   if (focusLines.length) {
@@ -203,16 +308,30 @@ export function buildPushText(snap) {
     L.push(...focusLines);
   }
 
+  const lic = catalysts.license;
+  if (lic?.ok && lic.matched?.length) {
+    L.push("");
+    L.push(`**版号（${lic.months[0]?.title || ""}）**`);
+    for (const m of lic.matched.slice(0, 6)) {
+      L.push(`- ${m.name}${m.companyName ? ` · ${m.companyName}` : ""}`);
+    }
+  }
+
+  const soon = (catalysts.pipeline || []).filter((p) => p.soon);
+  if (soon.length) {
+    L.push("");
+    L.push("**产品管线（临近）**");
+    for (const p of soon.slice(0, 6)) {
+      L.push(`- ${p.product}　${p.companyName || ""}　${p.stage || ""}　${p.expectedDate || ""}`);
+    }
+  }
+
   const news = [];
   for (const code of CONFIG.focus) {
     const d = snap.details?.[code];
     if (!d) continue;
-    for (const a of (d.announcements || []).slice(0, 2)) {
-      news.push(`${a.date} ${a.title}`);
-    }
-    for (const r of (d.reports || []).slice(0, 1)) {
-      news.push(`${r.date}【${r.org}】${r.title}`);
-    }
+    for (const a of (d.announcements || []).slice(0, 2)) news.push(`${a.date} ${a.title}`);
+    for (const r of (d.reports || []).slice(0, 1)) news.push(`${r.date}【${r.org}】${r.title}`);
   }
   if (news.length) {
     L.push("");
@@ -230,17 +349,17 @@ export function buildPushText(snap) {
 }
 
 /** 终端里看的宽表 */
-export function renderConsoleTable(stocks) {
+export function renderConsoleTable(stocks, market = "A") {
   const L = [];
   L.push(
     pad("名称", 12) +
       pad("代码", 8) +
-      padL("现价", 9) +
+      padL("现价", 10) +
       padL("涨跌%", 8) +
       padL("PE", 8) +
       padL("分位", 8) +
-      padL("加仓价", 9) +
-      padL("减仓价", 9) +
+      padL("加仓价", 10) +
+      padL("减仓价", 10) +
       "  状态"
   );
   for (const s of stocks) {
@@ -251,12 +370,12 @@ export function renderConsoleTable(stocks) {
     L.push(
       pad(s.name, 12) +
         pad(s.code, 8) +
-        padL(f2(s.price), 9) +
+        padL(px(s.price, s.market || market), 10) +
         padL(sign(s.chgPct), 8) +
-        padL(s.peTtm == null ? "-" : s.peTtm.toFixed(1), 8) +
+        padL(peOf(s), 8) +
         padL(fp(s.valuation?.compositePct), 8) +
-        padL(s.bands ? f2(s.bands.addPrice) : "-", 9) +
-        padL(s.bands ? f2(s.bands.trimPrice) : "-", 9) +
+        padL(s.bands ? px(s.bands.addPrice, s.market || market) : "-", 10) +
+        padL(s.bands ? px(s.bands.trimPrice, s.market || market) : "-", 10) +
         "  " +
         statusOf(s)
     );

@@ -15,34 +15,38 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{
-    margin:0;background:var(--bg);color:var(--text);
+    margin:0 auto;background:var(--bg);color:var(--text);
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-    padding:12px 12px calc(40px + env(safe-area-inset-bottom));
-    max-width:820px;margin:0 auto;
+    padding:12px 12px calc(40px + env(safe-area-inset-bottom));max-width:860px;
   }
   .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px}
   .row{display:flex;align-items:center}
   .between{justify-content:space-between}
+  .wrap{flex-wrap:wrap}
   .muted{color:var(--muted)}
   .dim{color:var(--dim)}
   .up{color:var(--up)} .down{color:var(--down)}
   .small{font-size:12px}
+  .tiny{font-size:11px}
   h1{font-size:18px;margin:0 0 2px}
   h2{font-size:15px;margin:0 0 12px;font-weight:600}
-  .tag{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:1px 6px;margin-left:8px}
+  h3{font-size:13px;margin:16px 0 8px;font-weight:600;color:var(--muted)}
   .big{font-size:34px;font-weight:700}
   .metrics{display:flex;flex-wrap:wrap;margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
   .metric{width:33.33%;margin-bottom:8px}
   .metric .k{display:block;font-size:11px;color:var(--muted)}
   .metric .v{display:block;font-size:15px;margin-top:2px}
   .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-  .tab{font-size:12px;color:var(--muted);background:var(--bg);border-radius:999px;padding:4px 12px;cursor:pointer;border:1px solid transparent}
+  .tab{font-size:12px;color:var(--muted);background:var(--bg);border-radius:999px;padding:4px 12px;cursor:pointer}
   .tab.on{color:#0f172a;background:var(--accent);font-weight:600}
+  .sepline{width:1px;background:var(--line);margin:0 2px;align-self:stretch}
   .item{border-bottom:1px solid var(--line);padding:12px 0;cursor:pointer}
   .item:last-child{border-bottom:none}
   .item.focus{background:linear-gradient(90deg,rgba(56,189,248,.09),transparent)}
   .name{font-size:15px;font-weight:600}
   .code{font-size:12px;color:var(--dim);margin-left:8px}
+  .mtag{font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px;border:1px solid var(--dim);color:var(--muted)}
+  .mtag.hk{border-color:#a78bfa;color:#a78bfa}
   .badge{font-size:11px;padding:2px 9px;border-radius:999px;color:#0f172a;white-space:nowrap}
   .badge.buy{background:var(--up)} .badge.hold{background:#64748b;color:#f1f5f9}
   .badge.trim{background:var(--down)} .badge.na{background:#334155;color:var(--muted)}
@@ -76,6 +80,11 @@
   .cat:last-child{border-bottom:none}
   .cat .l{width:92px;flex-shrink:0}
   .cat .d{color:var(--accent);font-weight:600}
+  .lic{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .lic:last-child{border-bottom:none}
+  .lic .pd{font-weight:600}
+  .tagline{display:inline-block;font-size:10px;background:#0f172a;color:var(--accent);border-radius:4px;padding:1px 5px;margin-right:4px}
+  .soon{border-left:3px solid var(--warn);padding-left:8px}
   .foot{text-align:center;font-size:11px;color:var(--dim);line-height:1.7;margin-top:20px}
   .empty{color:var(--muted);font-size:13px}
 </style>
@@ -87,9 +96,14 @@
 (function(){
   var snap = JSON.parse(document.getElementById("data").textContent);
   var focus = snap.focus || [];
-  var sort = "pct", filter = "all", openCode = null;
+  var hkFocus = snap.hkFocus || [];
+  var catalysts = snap.catalysts || {};
+  var sort = "pct", filter = "all", openKey = null;
 
   function f2(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(2); }
+  function f3(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(3); }
+  function px(v,m){ if(v==null||isNaN(v))return "-"; return m==="HK" ? (Math.abs(v)<10?f3(v):f2(v)) : f2(v); }
+  function pe(s){ var v = s.peTtm!=null?s.peTtm:s.peDyn; return v==null||isNaN(v)?"-":Number(v).toFixed(1); }
   function fp(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(1)+"%"; }
   function sg(v){ return (v==null||isNaN(v)) ? "-" : (v>0?"+":"")+Number(v).toFixed(2); }
   function cap(v){ return v ? (v/1e8).toFixed(0)+"亿" : "-"; }
@@ -99,16 +113,15 @@
 
   function decorate(s){
     var v = s.valuation || {};
-    var ok = v.ok;
     return {
-      code:s.code, name:s.name, price:s.price, chgPct:s.chgPct,
-      peTtm:s.peTtm, pb:s.pb, totalCap:s.totalCap,
-      pct: ok ? v.compositePct : null,
-      pePct: v.pePct, pbPct: v.pbPct, psPct: v.psPct,
-      bands: s.bands, status: s.status, valuation: v,
-      consensus: s.consensus, priceContext: s.priceContext,
-      invalids: s.invalidations || [],
-      isFocus: focus.indexOf(s.code) >= 0
+      key:(s.market||"A")+s.code, code:s.code, name:s.name, market:s.market||"A",
+      price:s.price, chgPct:s.chgPct, peTtm:s.peTtm, peDyn:s.peDyn, pb:s.pb,
+      totalCap:s.totalCap, pct: v.ok ? v.compositePct : null,
+      pePct:v.pePct, pbPct:v.pbPct, psPct:v.psPct, method:v.method||"valuation",
+      bands:s.bands, status:s.status, valuation:v, consensus:s.consensus,
+      priceContext:s.priceContext, invalids:s.invalidations||[],
+      isFocus: focus.indexOf(s.code)>=0 || hkFocus.indexOf(s.code)>=0,
+      isHk: s.market==="HK"
     };
   }
 
@@ -121,21 +134,26 @@
 
   function pass(s){
     if (filter === "focus") return s.isFocus;
+    if (filter === "A") return !s.isHk;
+    if (filter === "HK") return s.isHk;
     if (filter === "low") return s.pct != null && s.pct < 30;
     if (filter === "high") return s.pct != null && s.pct > 70;
     return true;
   }
 
+  function methodLabel(m){ return m==="price" ? "价格分位" : "估值分位"; }
+
   function detailHtml(s){
-    var d = (snap.details||{})[s.code] || {};
+    var d = {};
+    if (!s.isHk) d = (snap.details||{})[s.code] || {};
     var h = ['<div class="detail">'];
 
     if (s.bands) {
       h.push('<div class="bars">');
-      h.push('<div class="band buy"><div class="k">加仓价</div><div class="v">'+f2(s.bands.addPrice)+'</div>'
-        +'<div class="s">低于此价进入加仓区<br>区间 '+f2(s.bands.addLow)+' ~ '+f2(s.bands.addHigh)+'</div></div>');
-      h.push('<div class="band trim"><div class="k">减仓价</div><div class="v">'+f2(s.bands.trimPrice)+'</div>'
-        +'<div class="s">高于此价进入减仓区<br>区间 '+f2(s.bands.trimLow)+' ~ '+f2(s.bands.trimHigh)+'</div></div>');
+      h.push('<div class="band buy"><div class="k">加仓价</div><div class="v">'+px(s.bands.addPrice,s.market)+'</div>'
+        +'<div class="s">低于此价进入低位区<br>区间 '+px(s.bands.addLow,s.market)+' ~ '+px(s.bands.addHigh,s.market)+'</div></div>');
+      h.push('<div class="band trim"><div class="k">减仓价</div><div class="v">'+px(s.bands.trimPrice,s.market)+'</div>'
+        +'<div class="s">高于此价进入高位区<br>区间 '+px(s.bands.trimLow,s.market)+' ~ '+px(s.bands.trimHigh,s.market)+'</div></div>');
       h.push('</div>');
       h.push('<div class="legend"><span>距加仓价 '+sg(s.bands.toAddPricePct)+'%</span><span>距减仓价 '+sg(s.bands.toTrimPricePct)+'%</span></div>');
     } else {
@@ -145,14 +163,22 @@
     if (s.pct != null) {
       h.push('<div class="bar"><div class="zone buy"></div><div class="zone hold"></div><div class="zone trim"></div>'
         +'<div class="cursor" style="left:'+Math.max(0,Math.min(100,s.pct))+'%"></div></div>');
-      h.push('<div class="legend"><span>加仓区</span><span>持有区</span><span>减仓区</span></div>');
+      h.push('<div class="legend"><span>低位区</span><span>中间区</span><span>高位区</span></div>');
     }
 
     h.push('<div class="metrics">');
-    h.push('<div class="metric"><span class="k">PE 分位</span><span class="v">'+fp(s.pePct)+'</span></div>');
-    h.push('<div class="metric"><span class="k">PB 分位</span><span class="v">'+fp(s.pbPct)+'</span></div>');
-    h.push('<div class="metric"><span class="k">PS 分位</span><span class="v">'+fp(s.psPct)+'</span></div>');
+    h.push('<div class="metric"><span class="k">区间口径</span><span class="v">'+methodLabel(s.method)+'</span></div>');
+    h.push('<div class="metric"><span class="k">PE</span><span class="v">'+pe(s)+'</span></div>');
+    h.push('<div class="metric"><span class="k">PB</span><span class="v">'+(s.pb==null?"-":Number(s.pb).toFixed(2))+'</span></div>');
     h.push('</div>');
+
+    if (s.method === "valuation") {
+      h.push('<div class="metrics">');
+      h.push('<div class="metric"><span class="k">PE 分位</span><span class="v">'+fp(s.pePct)+'</span></div>');
+      h.push('<div class="metric"><span class="k">PB 分位</span><span class="v">'+fp(s.pbPct)+'</span></div>');
+      h.push('<div class="metric"><span class="k">PS 分位</span><span class="v">'+fp(s.psPct)+'</span></div>');
+      h.push('</div>');
+    }
 
     if (s.consensus && s.consensus.count) {
       var c = s.consensus;
@@ -171,48 +197,120 @@
     if (pc) {
       h.push('<div class="metrics">');
       h.push('<div class="metric"><span class="k">近3年分位</span><span class="v">'+fp(pc.pricePct)+'</span></div>');
-      h.push('<div class="metric"><span class="k">季线 MA60</span><span class="v">'+f2(pc.ma60)+'</span></div>');
-      h.push('<div class="metric"><span class="k">年线 MA250</span><span class="v">'+f2(pc.ma250)+'</span></div>');
-      h.push('<div class="metric"><span class="k">250日低</span><span class="v">'+f2(pc.low250)+'</span></div>');
-      h.push('<div class="metric"><span class="k">250日高</span><span class="v">'+f2(pc.high250)+'</span></div>');
+      h.push('<div class="metric"><span class="k">季线 MA60</span><span class="v">'+px(pc.ma60,s.market)+'</span></div>');
+      h.push('<div class="metric"><span class="k">年线 MA250</span><span class="v">'+px(pc.ma250,s.market)+'</span></div>');
+      h.push('<div class="metric"><span class="k">250日低</span><span class="v">'+px(pc.low250,s.market)+'</span></div>');
+      h.push('<div class="metric"><span class="k">250日高</span><span class="v">'+px(pc.high250,s.market)+'</span></div>');
       h.push('</div>');
     }
 
     if (s.invalids.length) {
       h.push('<div class="warnbox"><b>区间失效条件</b>');
       for (var i=0;i<s.invalids.length;i++) h.push('<div class="w">· '+esc(s.invalids[i])+'</div>');
-      h.push('<div class="s" style="color:#94a3b8;font-size:11px;margin-top:6px">触发任一条，按价格机械加减仓的前提就变了。</div></div>');
+      h.push('</div>');
     }
 
     if (d.announcements && d.announcements.length) {
-      h.push('<h2 style="margin-top:12px">公告</h2>');
+      h.push('<h3>公告</h3>');
       for (var j=0;j<d.announcements.length;j++){
         var a = d.announcements[j];
-        h.push('<div class="doc"><span class="dim small">'+a.date+'</span><br><a href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.title)+'</a></div>');
+        h.push('<div class="doc"><span class="dim tiny">'+a.date+'</span><br><a href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.title)+'</a></div>');
       }
     }
     if (d.reports && d.reports.length) {
-      h.push('<h2 style="margin-top:12px">机构报告</h2>');
+      h.push('<h3>机构报告</h3>');
       for (var k=0;k<Math.min(6,d.reports.length);k++){
         var r = d.reports[k];
-        h.push('<div class="doc"><span class="dim small">'+r.date+'</span> <span class="org">'+esc(r.org)+'</span><br>'
+        h.push('<div class="doc"><span class="dim tiny">'+r.date+'</span> <span class="org">'+esc(r.org)+'</span><br>'
           +'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.title)+'</a></div>');
       }
     }
+    if (s.isHk) {
+      h.push('<div class="tiny dim" style="margin-top:10px">港股没有免费的历史估值数据，区间由近 5 年价格分位反推，与 A 股的估值分位口径不同，两者不可直接比较。</div>');
+    }
+    h.push('</div>');
+    return h.join("");
+  }
+
+  function catalystHtml(){
+    var h = ['<div class="card"><h2>催化剂</h2>'];
+    var any = false;
+
+    var lic = catalysts.license;
+    if (lic && lic.ok && lic.months && lic.months.length) {
+      any = true;
+      var latest = lic.months[0];
+      h.push('<h3>版号公示　<span class="small dim">'+esc(latest.title)+'　'+latest.publishDate+'　共 '+(latest.total||"-")+' 款</span></h3>');
+      var ms = lic.matched || [];
+      if (!ms.length) {
+        h.push('<div class="empty">最近公示里没有匹配到跟踪范围的公司</div>');
+      } else {
+        for (var i=0;i<ms.length;i++){
+          var m = ms[i];
+          h.push('<div class="lic"><div style="width:76px;flex-shrink:0" class="dim small">'+m.date.slice(5)+'</div>'
+            +'<div><span class="pd">《'+esc(m.name)+'》</span>'
+            +(m.companyName?' <span class="org">'+esc(m.companyName)+'</span>':'')
+            +'<div class="tiny dim">'+esc(m.matchedField)+'：'+esc(m.matchedEntity)+'</div></div></div>');
+        }
+      }
+    }
+
+    var pipe = catalysts.pipeline || [];
+    if (pipe.length) {
+      any = true;
+      h.push('<h3>产品管线　<span class="small dim">人工维护，改 config/pipeline.json</span></h3>');
+      for (var p=0;p<pipe.length;p++){
+        var it = pipe[p];
+        var when = it.expectedDate==null ? "时间待定"
+          : (it.daysAway==null ? it.expectedDate
+            : it.expectedDate+'（'+(it.daysAway>=0? it.daysAway+' 天后' : '已过 '+(-it.daysAway)+' 天')+'）');
+        h.push('<div class="lic '+(it.soon?'soon':'')+'"><div style="width:76px;flex-shrink:0" class="dim small">'
+          +esc(it.stage||"")+'</div><div><span class="pd">'+esc(it.product)+'</span>'
+          +(it.companyName?' <span class="org">'+esc(it.companyName)+'</span>':'')
+          +'<div class="tiny dim">'+esc(when)+(it.note?'　'+esc(it.note):'')+'</div></div></div>');
+      }
+    }
+
+    var hl = catalysts.highlights || [];
+    if (hl.length) {
+      any = true;
+      h.push('<h3>近期动态　<span class="small dim">标题关键词扫描</span></h3>');
+      for (var q=0;q<Math.min(10,hl.length);q++){
+        var x = hl[q];
+        h.push('<div class="doc"><span class="dim tiny">'+x.date+'</span> <span class="tagline">'+esc(x.kind)+'</span>'
+          +'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.title)+'</a>'
+          +(x.tags&&x.tags.length?'<div class="tiny dim">命中：'+esc(x.tags.join(" / "))+'</div>':'')+'</div>');
+      }
+    }
+
+    var cal = catalysts.calendar || [];
+    if (cal.length) {
+      any = true;
+      h.push('<h3>日程提醒</h3>');
+      for (var c=0;c<cal.length;c++){
+        var k2 = cal[c];
+        h.push('<div class="cat"><div class="l"><div class="d">'+(k2.daysAway===0?"今天":k2.daysAway+" 天后")+'</div>'
+          +'<div class="dim tiny">'+k2.date+'</div></div>'
+          +'<div><div>'+esc(k2.title)+'</div><div class="dim tiny">'+esc(k2.note)+'</div></div></div>');
+      }
+    }
+
+    if (!any) h.push('<div class="empty">暂无</div>');
     h.push('</div>');
     return h.join("");
   }
 
   function render(){
     var s = snap.sector, idx = s.index;
-    var stocks = snap.stocks.map(decorate).sort(sortFn).filter(pass);
+    var hk = (snap.hkStocks||[]).map(decorate);
+    var all = snap.stocks.map(decorate).concat(hk).sort(sortFn).filter(pass);
     var h = [];
 
     h.push('<div class="card">');
     h.push('<div class="row between"><div><h1>喜好跟踪</h1>'
       + '<span class="small dim">'+snap.tradeDate+'</span></div>'
       + '<span class="small dim">'+new Date(snap.generatedAt).toLocaleString("zh-CN")+'</span></div>');
-    h.push('<div class="row" style="align-items:baseline;gap:12px;margin-top:10px">'
+    h.push('<div class="row wrap" style="align-items:baseline;gap:12px;margin-top:10px">'
       + '<span class="big '+tone(idx.chgPct)+'">'+f2(idx.price)+'</span>'
       + '<span class="'+tone(idx.chgPct)+'">'+(sg(idx.chgPct))+'%</span>'
       + '<span class="small dim">'+esc(idx.name)+(s.synthesized?' · 等权合成':'')+'</span></div>');
@@ -225,15 +323,27 @@
       +(s.trendBreadth.ma250Total?s.trendBreadth.aboveMa250+"/"+s.trendBreadth.ma250Total:"-")+'</span></div>');
     h.push('<div class="metric"><span class="k">站上季线</span><span class="v">'
       +(s.trendBreadth.ma60Total?s.trendBreadth.aboveMa60+"/"+s.trendBreadth.ma60Total:"-")+'</span></div>');
-    h.push('</div></div>');
+    h.push('</div>');
+    if (hk.length) {
+      var hu = hk.filter(function(x){return x.chgPct>0}).length;
+      var hd = hk.filter(function(x){return x.chgPct<0}).length;
+      h.push('<div class="small dim" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">'
+        +'港股 '+hk.length+' 只：'+hu+' 涨 '+hd+' 跌　区间口径为价格分位</div>');
+    }
+    h.push('</div>');
 
+    h.push(catalystHtml());
+
+    var stocks = all;
     h.push('<div class="card"><h2>跟踪列表 '+stocks.length+' 只</h2>');
     h.push('<div class="tabs">');
     h.push('<span class="tab'+(filter==="all"?" on":"")+'" data-filter="all">全部</span>');
+    h.push('<span class="tab'+(filter==="A"?" on":"")+'" data-filter="A">A股</span>');
+    h.push('<span class="tab'+(filter==="HK"?" on":"")+'" data-filter="HK">港股</span>');
     h.push('<span class="tab'+(filter==="focus"?" on":"")+'" data-filter="focus">重点</span>');
     h.push('<span class="tab'+(filter==="low"?" on":"")+'" data-filter="low">低位区</span>');
     h.push('<span class="tab'+(filter==="high"?" on":"")+'" data-filter="high">高位区</span>');
-    h.push('<span class="sep"></span>');
+    h.push('<span class="sepline"></span>');
     h.push('<span class="tab'+(sort==="pct"?" on":"")+'" data-sort="pct">分位</span>');
     h.push('<span class="tab'+(sort==="chg"?" on":"")+'" data-sort="chg">涨幅</span>');
     h.push('<span class="tab'+(sort==="cap"?" on":"")+'" data-sort="cap">市值</span>');
@@ -241,45 +351,37 @@
 
     for (var i=0;i<stocks.length;i++){
       var x = stocks[i];
-      h.push('<div class="item'+(x.isFocus?" focus":"")+'" data-code="'+x.code+'">');
+      h.push('<div class="item'+(x.isFocus?" focus":"")+'" data-key="'+x.key+'">');
       h.push('<div class="row between"><div class="row"><span class="name">'+esc(x.name)+'</span>'
-        +'<span class="code">'+x.code+'</span>'+(x.isFocus?'<span class="tag">重点</span>':'')+'</div>'
+        +'<span class="code">'+x.code+'</span>'
+        +'<span class="mtag'+(x.isHk?" hk":"")+'">'+(x.isHk?"HK":"A")+'</span>'
+        +(x.isFocus?'<span class="tagline">重点</span>':'')+'</div>'
         +'<span class="badge '+((x.status&&x.status.tone)||"na")+'">'+esc((x.status&&x.status.label)||"-")+'</span></div>');
-      h.push('<div class="line2"><span class="price '+tone(x.chgPct)+'">'+f2(x.price)+'</span>'
+      h.push('<div class="line2"><span class="price '+tone(x.chgPct)+'">'+px(x.price,x.market)+'</span>'
         +'<span class="'+tone(x.chgPct)+'">'+sg(x.chgPct)+'%</span>'
         +'<span class="small muted" style="margin-left:auto">分位 '+fp(x.pct)+'</span></div>');
-      h.push('<div class="line3">加仓 ≤ <span class="hl">'+(x.bands?f2(x.bands.addPrice):"-")+'</span>'
-        +'<span class="sep">|</span>减仓 ≥ <span class="hl">'+(x.bands?f2(x.bands.trimPrice):"-")+'</span>'
-        +'<span class="sep">|</span>PE '+(x.peTtm==null?"-":x.peTtm.toFixed(1))
+      h.push('<div class="line3">加仓 ≤ <span class="hl">'+(x.bands?px(x.bands.addPrice,x.market):"-")+'</span>'
+        +'<span class="sep">|</span>减仓 ≥ <span class="hl">'+(x.bands?px(x.bands.trimPrice,x.market):"-")+'</span>'
+        +'<span class="sep">|</span>PE '+pe(x)
         +'<span class="sep">|</span>'+cap(x.totalCap)+'</div>');
       h.push('</div>');
-      if (openCode === x.code) h.push(detailHtml(x));
+      if (openKey === x.key) h.push(detailHtml(x));
     }
+    if (!stocks.length) h.push('<div class="empty">没有符合条件的标的</div>');
     h.push('</div>');
-
-    if (snap.catalysts && snap.catalysts.length){
-      h.push('<div class="card"><h2>日程提醒</h2>');
-      for (var c=0;c<snap.catalysts.length;c++){
-        var k = snap.catalysts[c];
-        h.push('<div class="cat"><div class="l"><div class="d">'+(k.daysAway===0?"今天":k.daysAway+" 天后")+'</div>'
-          +'<div class="dim small">'+k.date+'</div></div>'
-          +'<div><div>'+esc(k.title)+'</div><div class="dim small">'+esc(k.note)+'</div></div></div>');
-      }
-      h.push('</div>');
-    }
 
     if (snap.industryReports && snap.industryReports.length){
       h.push('<div class="card"><h2>行业报告</h2>');
-      for (var q=0;q<Math.min(10,snap.industryReports.length);q++){
-        var ir = snap.industryReports[q];
-        h.push('<div class="doc"><span class="dim small">'+ir.date+'</span> <span class="org">'+esc(ir.org)+'</span><br>'
+      for (var q2=0;q2<Math.min(10,snap.industryReports.length);q2++){
+        var ir = snap.industryReports[q2];
+        h.push('<div class="doc"><span class="dim tiny">'+ir.date+'</span> <span class="org">'+esc(ir.org)+'</span><br>'
           +'<a href="'+esc(ir.url)+'" target="_blank" rel="noopener">'+esc(ir.title)+'</a></div>');
       }
       h.push('</div>');
     }
 
-    h.push('<div class="foot">数据来自公开接口，区间由历史估值分位反推，仅作跟踪记录，不构成投资建议。<br>'
-      +'页面由 GitHub Actions 自动生成</div>');
+    h.push('<div class="foot">数据来自公开接口。A 股区间由历史估值分位反推，港股由历史价格分位反推。<br>'
+      +'仅作跟踪记录，不构成投资建议。页面由 GitHub Actions 自动生成。</div>');
 
     document.getElementById("app").innerHTML = h.join("");
   }
@@ -289,11 +391,14 @@
     if (!t) return;
     if (t.dataset.sort){ sort = t.dataset.sort; render(); return; }
     if (t.dataset.filter){ filter = t.dataset.filter; render(); return; }
-    if (t.dataset.code){
-      openCode = (openCode === t.dataset.code) ? null : t.dataset.code;
+    if (t.dataset.key){
+      openKey = (openKey === t.dataset.key) ? null : t.dataset.key;
+      var k = openKey;
       render();
-      var el = document.querySelector('[data-code="'+openCode+'"]');
-      if (el) el.scrollIntoView({block:"center",behavior:"smooth"});
+      if (k) {
+        var el = document.querySelector('[data-key="'+k+'"]');
+        if (el) el.scrollIntoView({block:"center",behavior:"smooth"});
+      }
     }
   });
 

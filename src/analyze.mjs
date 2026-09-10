@@ -255,6 +255,8 @@ export function analyzeStock({ snapshot, history, kline, bandsCfg, consensus }) 
     consensus: consensus || null,
     valuation: {
       ok: b.ok,
+      /** 口径：valuation = 用历史估值分位反推价格 */
+      method: "valuation",
       reason: b.reason || null,
       compositePct: pct,
       pePct: b.metrics?.pe?.pct != null ? round(b.metrics.pe.pct, 1) : null,
@@ -380,5 +382,83 @@ export function analyzeSector(snapshot, indexSeries, stocks, { synthesized = fal
       name: s.name,
       pct: s.valuation.compositePct,
     })),
+  };
+}
+
+/**
+ * 港股口径：用「价格分位」而不是「估值分位」。
+ *
+ * 原因是港股拿不到免费的 PE/PB 历史，而且港股游戏股里亏损公司占比很高，
+ * PE 分位本身也不成立。价格分位至少是真实、可复现、可回测的。
+ *
+ * 加仓价 = 历史价格的 addHigh 分位值，减仓价 = trimLow 分位值。
+ * 这样口径与 A 股一致：现价分位低于 addHigh 就落在低位区。
+ */
+export function analyzeByPrice({ snapshot, kline, bandsCfg }) {
+  const closes = (kline || []).map((k) => k.close).filter((v) => Number.isFinite(v) && v > 0);
+  const price = snapshot.price;
+  const pc = priceContext(closes, price);
+
+  const base = {
+    market: "HK",
+    code: snapshot.code,
+    name: snapshot.name,
+    price,
+    chgPct: snapshot.chgPct,
+    turnover: snapshot.turnover,
+    totalCap: snapshot.totalCap,
+    peDyn: snapshot.peDyn ?? null,
+    peTtm: snapshot.peTtm ?? null,
+    pb: snapshot.pb ?? null,
+    ps: null,
+    consensus: null,
+    priceContext: pc,
+  };
+
+  if (closes.length < 250 || price == null) {
+    return {
+      ...base,
+      valuation: { ok: false, method: "price", reason: "日线不足 250 个交易日，无法定区间" },
+      bands: null,
+      status: { label: "数据不足", tone: "na" },
+      invalidations: [],
+    };
+  }
+
+  const sorted = [...closes].sort((a, b) => a - b);
+  const q = (p) => round(quantile(sorted, p / 100));
+  const pct = round(percentileRank(sorted, price), 1);
+  const addPrice = q(bandsCfg.addHigh);
+  const trimPrice = q(bandsCfg.trimLow);
+
+  const invalidations = [];
+  if (pc?.ma250 && price < pc.ma250) invalidations.push("股价跌破年线，中期趋势转弱");
+  if (pc?.low750 && price <= pc.low750 * 1.02)
+    invalidations.push("股价接近近 3 年最低，需先确认是估值问题还是基本面问题");
+
+  return {
+    ...base,
+    valuation: {
+      ok: true,
+      method: "price",
+      compositePct: pct,
+      samples: closes.length,
+      pePct: null,
+      pbPct: null,
+      psPct: null,
+      reason: null,
+    },
+    bands: {
+      addPrice,
+      trimPrice,
+      addLow: q(bandsCfg.addLow),
+      addHigh: addPrice,
+      trimLow: trimPrice,
+      trimHigh: q(bandsCfg.trimHigh),
+      toAddPricePct: round(((addPrice - price) / price) * 100, 1),
+      toTrimPricePct: round(((trimPrice - price) / price) * 100, 1),
+    },
+    status: statusOf(pct, bandsCfg),
+    invalidations,
   };
 }

@@ -1,19 +1,11 @@
 <view class="page">
-
   <view wx:if="{{loading}}" class="card center muted">加载中…</view>
-
   <view wx:elif="{{error}}" class="card">
     <view class="center down">加载失败</view>
     <view class="center muted small">{{error}}</view>
-    <view class="hint">
-      第一次使用请先点下方「同步数据」，
-      或者确认云函数 api 已经上传部署。
-    </view>
+    <view class="hint">第一次使用请先点下方「同步数据」，或者确认云函数 api 已经上传部署。</view>
   </view>
-
   <block wx:else>
-
-    <!-- 板块温度 -->
     <view class="card sector">
       <view class="row between">
         <view class="row">
@@ -22,58 +14,44 @@
         </view>
         <text class="muted small">{{tradeDate}}</text>
       </view>
-
       <view class="row baseline gap">
         <text class="big {{sector.chgClass}}">{{sector.priceText}}</text>
         <text class="{{sector.chgClass}} num">{{sector.chgText}}%</text>
       </view>
-
       <view class="metrics">
-        <view class="metric">
-          <text class="k">近5日</text>
-          <text class="v {{sector.chg5 >= 0 ? 'up' : 'down'}}">{{sector.chg5Text}}%</text>
-        </view>
-        <view class="metric">
-          <text class="k">近20日</text>
-          <text class="v {{sector.chg20 >= 0 ? 'up' : 'down'}}">{{sector.chg20Text}}%</text>
-        </view>
-        <view class="metric">
-          <text class="k">涨跌家数</text>
-          <text class="v">{{sector.breadthText}}</text>
-        </view>
-        <view class="metric">
-          <text class="k">距年线</text>
-          <text class="v {{sector.distToMa250Pct >= 0 ? 'up' : 'down'}}">{{sector.distMa250Text}}%</text>
-        </view>
-        <view class="metric">
-          <text class="k">站上年线</text>
-          <text class="v">{{sector.aboveMa250Text}}</text>
-        </view>
-        <view class="metric">
-          <text class="k">站上季线</text>
-          <text class="v">{{sector.aboveMa60Text}}</text>
-        </view>
+        <view class="metric"><text class="k">近5日</text><text class="v {{sector.chg5 >= 0 ? 'up' : 'down'}}">{{sector.chg5Text}}%</text></view>
+        <view class="metric"><text class="k">近20日</text><text class="v {{sector.chg20 >= 0 ? 'up' : 'down'}}">{{sector.chg20Text}}%</text></view>
+        <view class="metric"><text class="k">涨跌家数</text><text class="v">{{sector.breadthText}}</text></view>
+        <view class="metric"><text class="k">距年线</text><text class="v {{sector.distToMa250Pct >= 0 ? 'up' : 'down'}}">{{sector.distMa250Text}}%</text></view>
+        <view class="metric"><text class="k">站上年线</text><text class="v">{{sector.aboveMa250Text}}</text></view>
+        <view class="metric"><text class="k">站上季线</text><text class="v">{{sector.aboveMa60Text}}</text></view>
       </view>
     </view>
 
-    <!-- 入口 -->
     <view class="card entry row between" bindtap="onReports">
       <view>
-        <view class="entry-title">研报与催化剂</view>
-        <view class="muted small">行业研报 · 财报窗口 · 版号公示</view>
+        <view class="entry-title">催化剂与报告</view>
+        <view class="muted small">
+          <block wx:if="{{license}}">版号命中 {{license.matched.length}} 条 · </block>行业报告 · 日程提醒
+        </view>
       </view>
       <text class="muted">›</text>
     </view>
 
-    <!-- 关注池 -->
     <view class="card">
       <view class="row between">
-        <text class="section-title">关注池 {{stocks.length}} 只</text>
-        <view class="sorts">
-          <text class="sort {{sortMode === 'valuation' ? 'on' : ''}}" data-mode="valuation" bindtap="onSort">估值</text>
-          <text class="sort {{sortMode === 'change' ? 'on' : ''}}" data-mode="change" bindtap="onSort">涨幅</text>
-          <text class="sort {{sortMode === 'cap' ? 'on' : ''}}" data-mode="cap" bindtap="onSort">市值</text>
-        </view>
+        <text class="section-title">跟踪列表 {{stocks.length}} 只</text>
+      </view>
+      <view class="tabs">
+        <text class="sort {{market === 'all' ? 'on' : ''}}" data-mode="all" bindtap="onMarket">全部</text>
+        <text class="sort {{market === 'A' ? 'on' : ''}}" data-mode="A" bindtap="onMarket">A股</text>
+        <text class="sort {{market === 'HK' ? 'on' : ''}}" data-mode="HK" bindtap="onMarket">港股</text>
+        <text class="sort {{market === 'focus' ? 'on' : ''}}" data-mode="focus" bindtap="onMarket">重点</text>
+      </view>
+      <view class="tabs">
+        <text class="sort {{sortMode === 'pct' ? 'on' : ''}}" data-mode="pct" bindtap="onSort">按分位</text>
+        <text class="sort {{sortMode === 'chg' ? 'on' : ''}}" data-mode="chg" bindtap="onSort">按涨幅</text>
+        <text class="sort {{sortMode === 'cap' ? 'on' : ''}}" data-mode="cap" bindtap="onSort">按市值</text>
       </view>
 
       <view class="list">
@@ -88,17 +66,16 @@
             <view class="row name-wrap">
               <text class="name">{{item.name}}</text>
               <text class="code muted">{{item.code}}</text>
+              <text class="tag {{item.isHk ? 'hk-tag' : ''}}">{{item.isHk ? 'HK' : 'A'}}</text>
               <text wx:if="{{item.isFocus}}" class="tag focus-tag">重点</text>
             </view>
             <text class="badge {{item.statusTone}}">{{item.statusLabel}}</text>
           </view>
-
           <view class="item-mid">
             <text class="price {{item.chgClass}}">{{item.priceText}}</text>
             <text class="chg {{item.chgClass}}">{{item.chgText}}%</text>
-            <text class="pct muted">估值分位 {{item.pctText}}</text>
+            <text class="pct muted">分位 {{item.pctText}}</text>
           </view>
-
           <view class="item-bot muted">
             <text wx:if="{{item.hasBands}}">加仓 ≤ <text class="hl">{{item.addText}}</text></text>
             <text wx:else>加仓 -</text>
@@ -117,9 +94,8 @@
         {{syncing ? '抓取中…' : '同步数据'}}
       </button>
       <view class="disclaimer">
-        区间由历史估值分位反推，仅作跟踪参考，不构成投资建议。
+        A股区间由历史估值分位反推，港股由历史价格分位反推，口径不同。仅作跟踪记录，不构成投资建议。
       </view>
     </view>
-
   </block>
 </view>

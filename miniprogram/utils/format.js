@@ -16,6 +16,13 @@ function price(v) {
   return Number(v).toFixed(2);
 }
 
+/** 港股低价股需要 3 位小数 */
+function priceOf(v, market) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "-";
+  if (market === "HK") return Math.abs(v) < 10 ? Number(v).toFixed(3) : Number(v).toFixed(2);
+  return Number(v).toFixed(2);
+}
+
 function cap(v) {
   if (!v) return "-";
   return `${(v / 1e8).toFixed(1)}亿`;
@@ -32,27 +39,31 @@ function decorateStock(s) {
     return Object.assign({}, s, { failed: true });
   }
   const b = s.bands;
+  const mk = s.market || "A";
+  const pe = s.peTtm !== null && s.peTtm !== undefined ? s.peTtm : s.peDyn;
   return Object.assign({}, s, {
+    market: mk,
     chgClass: tone(s.chgPct),
     chgText: sign(s.chgPct),
-    priceText: price(s.price),
-    peText: s.peTtm === null || s.peTtm === undefined ? "-" : Number(s.peTtm).toFixed(1),
+    priceText: priceOf(s.price, mk),
+    peText: pe === null || pe === undefined ? "-" : Number(pe).toFixed(1),
     pbText: s.pb === null || s.pb === undefined ? "-" : Number(s.pb).toFixed(2),
     capText: cap(s.totalCap),
     pctText: s.valuation && s.valuation.ok ? pct(s.valuation.compositePct) : "-",
     pePctText: pct(s.valuation && s.valuation.pePct),
     pbPctText: pct(s.valuation && s.valuation.pbPct),
     psPctText: pct(s.valuation && s.valuation.psPct),
-    addText: b ? price(b.addPrice) : "-",
-    trimText: b ? price(b.trimPrice) : "-",
+    addText: b ? priceOf(b.addPrice, mk) : "-",
+    trimText: b ? priceOf(b.trimPrice, mk) : "-",
     toAddText: b && b.toAddPricePct !== null ? sign(b.toAddPricePct) : "-",
     toTrimText: b && b.toTrimPricePct !== null ? sign(b.toTrimPricePct) : "-",
-    addZoneText: b ? `${price(b.addLow)} ~ ${price(b.addHigh)}` : "-",
-    trimZoneText: b ? `${price(b.trimLow)} ~ ${price(b.trimHigh)}` : "-",
+    addZoneText: b ? `${priceOf(b.addLow, mk)} ~ ${priceOf(b.addHigh, mk)}` : "-",
+    trimZoneText: b ? `${priceOf(b.trimLow, mk)} ~ ${priceOf(b.trimHigh, mk)}` : "-",
+    methodLabel: s.valuation && s.valuation.method === "price" ? "价格分位" : "估值分位",
     statusLabel: (s.status && s.status.label) || "-",
     statusTone: (s.status && s.status.tone) || "na",
     hasBands: !!b,
   });
 }
 
-module.exports = { sign, tone, price, cap, pct, decorateStock };
+module.exports = { sign, tone, price, priceOf, cap, pct, decorateStock };

@@ -5,7 +5,10 @@ Page({
     loading: true,
     error: "",
     tradeDate: "",
-    catalysts: [],
+    license: null,
+    pipeline: [],
+    highlights: [],
+    calendar: [],
     industryReports: [],
     groups: [],
   },
@@ -33,7 +36,12 @@ Page({
       this.setData({
         loading: false,
         tradeDate: r.tradeDate,
-        catalysts: (r.catalysts || []).map((c) =>
+        license: r.license && r.license.ok ? r.license : null,
+        pipeline: (r.pipeline || []).map((p) =>
+          Object.assign({}, p, { whenText: this.whenText(p) })
+        ),
+        highlights: r.highlights || [],
+        calendar: (r.calendar || []).map((c) =>
           Object.assign({}, c, {
             awayText: c.daysAway === 0 ? "今天" : `${c.daysAway} 天后`,
           })
@@ -44,6 +52,14 @@ Page({
     } catch (e) {
       this.setData({ loading: false, error: e.message });
     }
+  },
+
+  whenText(p) {
+    if (!p.expectedDate) return "时间待定";
+    if (p.daysAway == null) return p.expectedDate;
+    return p.daysAway >= 0
+      ? `${p.expectedDate}（${p.daysAway} 天后）`
+      : `${p.expectedDate}（已过 ${-p.daysAway} 天）`;
   },
 
   onCopy(e) {

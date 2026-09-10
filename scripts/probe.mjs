@@ -4,7 +4,15 @@
  *
  *   node scripts/probe.mjs
  */
-import { fetchBoardStocks, fetchBoardSnapshot, fetchValuationHistory, fetchAnnouncements, fetchStockReports } from "../src/eastmoney.mjs";
+import {
+  fetchBoardStocks,
+  fetchBoardSnapshot,
+  fetchValuationHistory,
+  fetchAnnouncements,
+  fetchStockReports,
+} from "../src/eastmoney.mjs";
+import { fetchHkSnapshots, fetchHkKline } from "../src/hk.mjs";
+import { fetchLicenseMonths, fetchLicenseDetail } from "../src/license.mjs";
 import { yearsAgo } from "../src/config.mjs";
 
 const cases = [
@@ -46,6 +54,32 @@ const cases = [
     run: async () => {
       const r = await fetchStockReports("002555", yearsAgo(1));
       return `${r.length} 篇`;
+    },
+  },
+  {
+    name: "港股快照",
+    critical: true,
+    run: async () => {
+      const r = await fetchHkSnapshots(["00700", "09999", "02400"]);
+      return `${r.length} 只，示例 ${r[0]?.name} ${r[0]?.price}`;
+    },
+  },
+  {
+    name: "港股日线",
+    critical: true,
+    run: async () => {
+      const r = await fetchHkKline("00700", 1400);
+      return `${r.length} 根，最新 ${r.at(-1)?.date}`;
+    },
+  },
+  {
+    name: "版号公示",
+    critical: false,
+    run: async () => {
+      const months = await fetchLicenseMonths(1);
+      if (!months.length) throw new Error("没有取到月度公告");
+      const rows = await fetchLicenseDetail(months[0].url);
+      return `${months[0].title}，${rows.length} 款`;
     },
   },
 ];

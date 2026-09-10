@@ -115,7 +115,34 @@ async function main() {
 
   buildSite(snap);
 
-  console.log("\n" + renderConsoleTable(snap.stocks) + "\n");
+  console.log("\n-- A股 --");
+  console.log(renderConsoleTable(snap.stocks, "A"));
+  console.log("\n-- 港股 --");
+  console.log(renderConsoleTable(snap.hkStocks || [], "HK"));
+  console.log("");
+
+  const c = snap.catalysts || {};
+  if (c.license?.ok) {
+    console.log(
+      `-- 版号 -- ${c.license.months[0]?.title || ""}　共 ${c.license.months[0]?.total ?? "-"} 款　` +
+        `命中 ${c.license.matched?.length ?? 0} 条`
+    );
+    for (const m of c.license.matched || []) {
+      console.log(`   ${m.date} 《${m.name}》 ${m.companyName || ""}（${m.matchedField}：${m.matchedEntity}）`);
+    }
+  }
+  if (c.pipeline?.length) {
+    console.log(`-- 产品管线 -- ${c.pipeline.length} 条`);
+    for (const p of c.pipeline.slice(0, 8)) {
+      console.log(`   ${p.soon ? "临近 " : "     "}${p.product}　${p.companyName || ""}　${p.stage || ""}　${p.expectedDate || ""}`);
+    }
+  }
+  if (c.highlights?.length) {
+    console.log(`-- 近期动态 -- ${c.highlights.length} 条`);
+    for (const h of c.highlights.slice(0, 6)) {
+      console.log(`   ${h.date} [${h.kind}] ${h.title.slice(0, 44)}`);
+    }
+  }
 
   await push(buildPushText(snap));
 

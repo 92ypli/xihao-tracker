@@ -46,3 +46,11 @@
   text-align: center;
   line-height: 1.6;
 }
+
+.mt { margin-top: 14rpx; }
+.dim { color: #64748b; }
+
+.cat.soon {
+  border-left: 4rpx solid #fbbf24;
+  padding-left: 12rpx;
+}

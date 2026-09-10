@@ -9,8 +9,28 @@ async function ensureCollection() {
   try {
     await db.createCollection(COLLECTION);
   } catch (e) {
-    // -502001 已存在，其他错误交给后续读写去暴露
+    // 已存在会报错，忽略；其他错误交给后续读写去暴露
   }
+}
+
+/** 列表页只需要精简字段，避免响应过大 */
+function slim(s) {
+  return {
+    market: s.market || "A",
+    code: s.code,
+    name: s.name,
+    price: s.price,
+    chgPct: s.chgPct,
+    turnover: s.turnover,
+    totalCap: s.totalCap,
+    peTtm: s.peTtm ?? null,
+    peDyn: s.peDyn ?? null,
+    pb: s.pb ?? null,
+    valuation: s.valuation,
+    bands: s.bands,
+    status: s.status,
+    error: s.error || null,
+  };
 }
 
 /**
@@ -23,7 +43,7 @@ async function refresh() {
 
   const snap = await buildSnapshot();
 
-  // 图表只需要最近 250 根，别把文档撑大
+  // 板块指数序列只需要最近 250 根，别把文档撑大
   const compact = {
     ...snap,
     sector: { ...snap.sector, series: snap.sector.series.slice(-250) },
@@ -35,75 +55,73 @@ async function refresh() {
     ok: true,
     tradeDate: snap.tradeDate,
     stocks: snap.stocks.length,
+    hkStocks: (snap.hkStocks || []).length,
+    licenseHits: snap.catalysts?.license?.matched?.length ?? 0,
     generatedAt: snap.generatedAt,
   };
 }
 
 async function latestSnapshot() {
-  const res = await db
-    .collection(COLLECTION)
-    .orderBy("tradeDate", "desc")
-    .limit(1)
-    .get();
+  const res = await db.collection(COLLECTION).orderBy("tradeDate", "desc").limit(1).get();
   return res.data[0] || null;
 }
 
-/** 首页：板块温度 + 关注池 */
+/** 首页：板块温度 + A股/港股列表 + 催化剂摘要 */
 async function dashboard() {
   const snap = await latestSnapshot();
   if (!snap) return { ok: false, error: "还没有数据，请先执行一次刷新" };
-  const { sector, stocks, tradeDate, generatedAt, focus } = snap;
+  const c = snap.catalysts || {};
   return {
     ok: true,
-    tradeDate,
-    generatedAt,
-    focus,
-    sector: { ...sector, series: undefined },
-    stocks: stocks.map((s) => ({
-      code: s.code,
-      name: s.name,
-      price: s.price,
-      chgPct: s.chgPct,
-      peTtm: s.peTtm,
-      pb: s.pb,
-      totalCap: s.totalCap,
-      valuation: s.valuation,
-      bands: s.bands,
-      status: s.status,
-      error: s.error || null,
-    })),
+    tradeDate: snap.tradeDate,
+    generatedAt: snap.generatedAt,
+    focus: snap.focus || [],
+    hkFocus: snap.hkFocus || [],
+    sector: { ...snap.sector, series: undefined },
+    stocks: (snap.stocks || []).map(slim),
+    hkStocks: (snap.hkStocks || []).map(slim),
+    license: c.license || null,
+    pipeline: c.pipeline || [],
+    highlights: (c.highlights || []).slice(0, 10),
+    calendar: c.calendar || [],
   };
 }
 
-/** 个股详情 */
+/** 单只标的详情，A股和港股都支持 */
 async function stock(code) {
   const snap = await latestSnapshot();
   if (!snap) return { ok: false, error: "还没有数据" };
-  const s = snap.stocks.find((x) => x.code === code);
-  if (!s) return { ok: false, error: "关注池里没有这只票" };
+  const all = [...(snap.stocks || []), ...(snap.hkStocks || [])];
+  const s = all.find((x) => x.code === code);
+  if (!s) return { ok: false, error: "跟踪范围里没有这只" };
   return {
     ok: true,
     tradeDate: snap.tradeDate,
     stock: s,
     detail: snap.details?.[code] || null,
-    catalysts: snap.catalysts || [],
   };
 }
 
-/** 研报与催化剂 */
+/** 详情页：催化剂 + 行业报告 */
 async function reports() {
   const snap = await latestSnapshot();
   if (!snap) return { ok: false, error: "还没有数据" };
+  const c = snap.catalysts || {};
+  const nameOf = (code) =>
+    [...(snap.stocks || []), ...(snap.hkStocks || [])].find((s) => s.code === code)?.name || code;
   return {
     ok: true,
     tradeDate: snap.tradeDate,
     industryReports: snap.industryReports || [],
-    catalysts: snap.catalysts || [],
+    license: c.license || null,
+    pipeline: c.pipeline || [],
+    highlights: c.highlights || [],
+    calendar: c.calendar || [],
     details: Object.fromEntries(
       Object.entries(snap.details || {}).map(([k, v]) => [
         k,
         {
-          name: snap.stocks.find((s) => s.code === k)?.name || k,
+          name: nameOf(k),
           announcements: v.announcements || [],
           reports: (v.reports || []).slice(0, 8),
         },

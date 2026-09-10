@@ -125,6 +125,17 @@
   border-color: #fbbf24;
 }
 
+.hk-tag {
+  color: #a78bfa;
+  border-color: #a78bfa;
+}
+
+.tabs {
+  display: flex;
+  gap: 8rpx;
+  margin-bottom: 14rpx;
+}
+
 .badge {
   font-size: 22rpx;
   padding: 4rpx 14rpx;

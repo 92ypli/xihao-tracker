@@ -2,10 +2,54 @@
   <view wx:if="{{loading}}" class="card center muted">加载中…</view>
   <view wx:elif="{{error}}" class="card center down">{{error}}</view>
   <block wx:else>
-    <view class="card">
-      <view class="section-title">催化剂日历</view>
-      <view wx:if="{{!catalysts.length}}" class="muted">未来 60 天没有可自动识别的节点</view>
-      <view class="cat" wx:for="{{catalysts}}" wx:key="title">
+    <view class="card" wx:if="{{license}}">
+      <view class="section-title">版号公示</view>
+      <view class="muted small">
+        {{license.months[0].title}} · {{license.months[0].publishDate}} · 共 {{license.months[0].total}} 款
+      </view>
+      <view wx:if="{{!license.matched.length}}" class="muted small mt">最近公示里没有匹配到跟踪范围的公司</view>
+      <view class="cat" wx:for="{{license.matched}}" wx:key="docNo">
+        <view class="cat-left">
+          <text class="cat-day dim">{{item.date}}</text>
+        </view>
+        <view class="cat-right">
+          <text class="cat-title">《{{item.name}}》<text wx:if="{{item.companyName}}" class="org"> {{item.companyName}}</text></text>
+          <text class="muted small">{{item.matchedField}}：{{item.matchedEntity}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{pipeline.length}}">
+      <view class="section-title">产品管线</view>
+      <view class="muted small">人工维护，改 config/pipeline.json</view>
+      <view class="cat {{item.soon ? 'soon' : ''}}" wx:for="{{pipeline}}" wx:key="product">
+        <view class="cat-left">
+          <text class="cat-day">{{item.stage}}</text>
+          <text class="muted small">{{item.whenText}}</text>
+        </view>
+        <view class="cat-right">
+          <text class="cat-title">{{item.product}}<text wx:if="{{item.companyName}}" class="org"> {{item.companyName}}</text></text>
+          <text class="muted small" wx:if="{{item.note}}">{{item.note}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{highlights.length}}">
+      <view class="section-title">近期动态</view>
+      <view class="muted small">标题关键词扫描</view>
+      <view class="doc" wx:for="{{highlights}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <view class="row between">
+          <text class="doc-date muted">{{item.date}}</text>
+          <text class="org">{{item.kind}}</text>
+        </view>
+        <text class="doc-title">{{item.title}}</text>
+        <text class="muted small" wx:if="{{item.tags.length}}">命中：{{item.tags.join(' / ')}}</text>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{calendar.length}}">
+      <view class="section-title">日程提醒</view>
+      <view class="cat" wx:for="{{calendar}}" wx:key="date">
         <view class="cat-left">
           <text class="cat-day">{{item.awayText}}</text>
           <text class="muted small">{{item.date}}</text>
@@ -15,11 +59,10 @@
           <text class="muted small">{{item.note}}</text>
         </view>
       </view>
-      <view class="muted small mt">新游定档、上线时间需要人工维护，后续可以在云数据库加一张 events 表接进来。</view>
     </view>
-    <view class="card">
-      <view class="section-title">行业研报</view>
-      <view wx:if="{{!industryReports.length}}" class="muted">暂无</view>
+
+    <view class="card" wx:if="{{industryReports.length}}">
+      <view class="section-title">行业报告</view>
       <view class="doc" wx:for="{{industryReports}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
         <view class="row between">
           <text class="doc-date muted">{{item.date}}</text>
@@ -28,6 +71,7 @@
         <text class="doc-title">{{item.title}}</text>
       </view>
     </view>
+
     <view class="card" wx:for="{{groups}}" wx:key="code" wx:for-item="g">
       <view class="section-title">{{g.name}} · {{g.code}}</view>
       <view class="sub muted">公告</view>
@@ -36,7 +80,7 @@
         <text class="doc-date muted">{{item.date}}</text>
         <text class="doc-title">{{item.title}}</text>
       </view>
-      <view class="sub muted">研报</view>
+      <view class="sub muted">机构报告</view>
       <view class="doc" wx:for="{{g.reports}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
         <view class="row between">
           <text class="doc-date muted">{{item.date}}</text>
@@ -45,6 +89,7 @@
         <text class="doc-title">{{item.title}}</text>
       </view>
     </view>
+
     <view class="disclaimer">点任意条目复制原文链接，在浏览器里打开。</view>
   </block>
 </view>
