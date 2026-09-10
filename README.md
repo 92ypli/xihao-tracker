@@ -64,7 +64,7 @@ GitHub → New repository → 名字随意（比如 `xihao-tracker`）→ 选 **
 ### 第 2 步：推代码
 
 ```powershell
-cd C:\Users\Administrator\Documents\Codex\2026-09-10\new-chat-2\outputs\xihao-tracker
+cd <项目所在目录>
 
 # 身份（没配过就要配一次）
 & "C:\Program Files\Git\cmd\git.exe" config --global user.email "你的GitHub邮箱"
