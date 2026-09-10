@@ -206,6 +206,35 @@ async function main() {
     }
   }
 
+  const profs = snap.profiles?.companies || {};
+  const profCodes = Object.keys(profs);
+  if (profCodes.length) {
+    console.log(
+      `-- 产品档案 -- ${profCodes.length} 家公司，TapTap 抓取 ${snap.profiles.taptapFetched} 个`
+    );
+    for (const code of profCodes) {
+      const cp = profs[code];
+      console.log(`   ${cp.name}（${code}）`);
+      for (const pr of cp.products) {
+        const tap = pr.tap
+          ? `TapTap ${pr.tap.score ?? "-"}（好评 ${pr.tap.goodRate ?? "-"}%，${pr.tap.reviewCount ?? "-"} 条）`
+          : pr.taptap
+            ? "TapTap 抓取失败"
+            : "";
+        console.log(
+          `     ${String(pr.status || "").padEnd(4)} ${pr.name.padEnd(16)} ` +
+            `${(pr.expectedDate || pr.launchDate || "").padEnd(9)} ${tap}`
+        );
+      }
+    }
+  }
+  if (snap.upcoming?.length) {
+    console.log(`-- 临近在测 -- ${snap.upcoming.length} 个`);
+    for (const u of snap.upcoming) {
+      console.log(`   ${u.soonDays} 天后  ${u.name}　${u.companyName}　${u.expectedDate || "待定"}`);
+    }
+  }
+
   await push(buildPushText(snap));
 
   const failed = snap.stocks.filter((s) => s.error);

@@ -217,6 +217,36 @@ export function buildMarkdown(snap) {
       );
     }
     if (s.invalidations?.length) L.push(`- **区间失效条件**：${s.invalidations.join("；")}`);
+
+    const prof = snap.profiles?.companies?.[s.code];
+    if (prof?.products?.length) {
+      L.push("");
+      L.push("**产品档案**");
+      if (prof.note) L.push(`> ${prof.note}`);
+      L.push("");
+      for (const p of prof.products) {
+        const bits = [];
+        if (p.type) bits.push(p.type);
+        if (p.status) bits.push(p.status);
+        if (p.tap) {
+          bits.push(
+            `TapTap ${p.tap.score ?? "-"}` +
+              (p.tap.goodRate != null ? `（好评 ${p.tap.goodRate}%` : "") +
+              (p.tap.reviewCount ? `，${p.tap.reviewCount} 条评价）` : p.tap.goodRate != null ? "）" : "") +
+              (p.tap.labels?.length ? ` 状态 ${p.tap.labels.join("/")}` : "")
+          );
+        }
+        if (p.launchDate) bits.push(`上线 ${p.launchDate}${p.monthsLive != null ? `（${p.monthsLive} 个月）` : ""}`);
+        if (p.expectedDate)
+          bits.push(
+            `预期 ${p.expectedDate}` +
+              (p.daysAway != null ? `（${p.daysAway >= 0 ? `${p.daysAway} 天后` : `已过 ${-p.daysAway} 天`}）` : "")
+          );
+        else if (p.upcoming) bits.push("时间待定");
+        L.push(`- ${p.soonDays != null ? "🔔 " : ""}**${p.name}**　${bits.join("　")}`);
+        if (p.note) L.push(`  - ${p.note}`);
+      }
+    }
     L.push("");
 
     const d = snap.details?.[s.code];
@@ -323,6 +353,19 @@ export function buildPushText(snap) {
     L.push("**产品管线（临近）**");
     for (const p of soon.slice(0, 6)) {
       L.push(`- ${p.product}　${p.companyName || ""}　${p.stage || ""}　${p.expectedDate || ""}`);
+    }
+  }
+
+  const up = (snap.upcoming || []).slice(0, 6);
+  if (up.length) {
+    L.push("");
+    L.push("**在测 / 待上线**");
+    for (const p of up) {
+      const t = p.tap ? `　TapTap ${p.tap.score ?? "-"}` : "";
+      L.push(
+        `- ${p.name}　${p.companyName || ""}　${p.status || ""}　` +
+          `${p.expectedDate || "时间待定"}（${p.soonDays} 天后）${t}`
+      );
     }
   }
 

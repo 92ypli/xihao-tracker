@@ -12,6 +12,7 @@ import { fetchHkSnapshots, fetchHkKline } from "./hk.mjs";
 import { fetchLicense } from "./license.mjs";
 import { analyzeStock, analyzeSector, analyzeByPrice, buildConsensus, synthesizeIndex } from "./analyze.mjs";
 import { buildCatalystBoard, buildLicenseKeywords } from "./catalysts.mjs";
+import { buildProfiles, upcomingFromProfiles } from "./profiles.mjs";
 import { CONFIG, yearsAgo, beijingToday } from "./config.mjs";
 
 const log = (msg) => console.log(`[pipeline] ${msg}`);
@@ -166,6 +167,20 @@ export async function buildSnapshot({ onProgress } = {}) {
 
   const catalysts = buildCatalystBoard({ details: detailMap, license });
   const sector = analyzeSector(boardSnapshot, boardKline, stocks, { synthesized });
+
+  log("读取产品档案");
+  let profiles = { companies: {}, taptapFetched: 0 };
+  try {
+    profiles = await buildProfiles();
+    log(
+      `产品档案：${Object.keys(profiles.companies).length} 家公司，` +
+        `抓取 TapTap ${profiles.taptapFetched} 个`
+    );
+  } catch (e) {
+    log(`产品档案读取失败: ${e.message}`);
+  }
+  const upcoming = upcomingFromProfiles(profiles);
+
   log(`完成，耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   return {
@@ -180,6 +195,8 @@ export async function buildSnapshot({ onProgress } = {}) {
     details: detailMap,
     industryReports,
     catalysts,
+    profiles,
+    upcoming,
     focus: CONFIG.focus,
     hkFocus: CONFIG.hkFocus || [],
   };

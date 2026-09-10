@@ -86,6 +86,19 @@
   .lic .pd{font-weight:600}
   .tagline{display:inline-block;font-size:10px;background:#0f172a;color:var(--accent);border-radius:4px;padding:1px 5px;margin-right:4px}
   .soon{border-left:3px solid var(--warn);padding-left:8px}
+  .prod{padding:10px 0;border-bottom:1px solid var(--line)}
+  .prod:last-child{border-bottom:none}
+  .prod-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .prod-name{font-weight:600;font-size:14px}
+  .chip{font-size:10px;padding:1px 7px;border-radius:999px;background:#0f172a;color:var(--muted);border:1px solid var(--line)}
+  .chip.testing{color:var(--warn);border-color:var(--warn)}
+  .chip.live{color:var(--accent);border-color:var(--accent)}
+  .score{font-size:13px;font-weight:700;color:var(--warn)}
+  .score.good{color:var(--down)}
+  .score.bad{color:var(--up)}
+  .prod-note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+  .prod-meta{font-size:11px;color:var(--dim);margin-top:3px}
+  .empty-hint{font-size:12px;color:var(--dim);line-height:1.7;background:#0f172a;border-radius:8px;padding:10px}
   .foot{text-align:center;font-size:11px;color:var(--dim);line-height:1.7;margin-top:20px}
   .empty{color:var(--muted);font-size:13px}
   .locklink{color:var(--dim);text-decoration:underline;cursor:pointer}
@@ -344,7 +357,72 @@
     if (s.isHk) {
       h.push('<div class="tiny dim" style="margin-top:10px">港股没有免费的历史估值数据，区间由近 5 年价格分位反推，与 A 股的估值分位口径不同，两者不可直接比较。</div>');
     }
+    h.push(productHtml(s.code));
     h.push('</div>');
+    return h.join("");
+  }
+
+  function scoreClass(v){
+    if (v == null) return "";
+    if (v >= 8) return "good";
+    if (v < 6) return "bad";
+    return "";
+  }
+
+  function productHtml(code){
+    var all = (snap.profiles && snap.profiles.companies) || {};
+    var prof = all[code];
+    if (!prof || !prof.products || !prof.products.length) {
+      return '<h3>产品档案</h3><div class="empty-hint">这家公司还没有填产品档案。'
+        + '在 <b>config/profiles.json</b> 里补上，填产品名和 TapTap 链接，'
+        + '评分、好评率、评价数、上线时间、在测状态都会自动抓。</div>';
+    }
+    var h = ['<h3>产品档案</h3>'];
+    if (prof.note) h.push('<div class="prod-note" style="margin-bottom:8px">'+esc(prof.note)+'</div>');
+
+    var up = prof.products.filter(function(p){ return p.upcoming; });
+    var live = prof.products.filter(function(p){ return !p.upcoming; });
+
+    function row(p){
+      var cls = p.status === "测试中" ? "testing" : (p.status === "已上线" || p.status === "运营中" ? "live" : "");
+      var t = p.tap;
+      var meta = [];
+      if (t) {
+        meta.push('<span class="score '+scoreClass(t.score)+'">TapTap '+(t.score==null?"-":t.score)+(t.maxScore&&t.maxScore!==10?"/"+t.maxScore:"")+'</span>');
+        if (t.goodRate != null) meta.push('好评率 '+t.goodRate+'%');
+        if (t.reviewCount) meta.push(t.reviewCount+' 条评价');
+        if (t.labels && t.labels.length) meta.push('状态：'+t.labels.join('/'));
+      } else if (p.tapError) {
+        meta.push('TapTap 抓取失败');
+      } else if (p.taptap) {
+        meta.push('TapTap id 无效');
+      }
+      if (p.launchDate) meta.push('上线 '+p.launchDate+(p.monthsLive!=null?'（'+p.monthsLive+' 个月）':''));
+      if (p.expectedDate) {
+        meta.push('预期 '+p.expectedDate+(p.daysAway!=null?'（'+(p.daysAway>=0?p.daysAway+' 天后':'已过 '+(-p.daysAway)+' 天')+'）':''));
+      } else if (p.upcoming) {
+        meta.push('时间待定');
+      }
+
+      return '<div class="prod'+(p.soonDays!=null?' soon':'')+'">'
+        + '<div class="prod-top"><span class="prod-name">'+esc(p.name)+'</span>'
+        + (p.type?'<span class="chip">'+esc(p.type)+'</span>':'')
+        + (p.status?'<span class="chip '+cls+'">'+esc(p.status)+'</span>':'')
+        + (t?'<a href="'+esc(t.url)+'" target="_blank" rel="noopener" class="chip">TapTap ↗</a>':'')
+        + '</div>'
+        + (meta.length?'<div class="prod-meta">'+meta.join(' · ')+'</div>':'')
+        + (p.note?'<div class="prod-note">'+esc(p.note)+'</div>':'')
+        + '</div>';
+    }
+
+    if (up.length) {
+      h.push('<div class="small dim" style="margin:8px 0 2px">在测 / 待上线</div>');
+      for (var i=0;i<up.length;i++) h.push(row(up[i]));
+    }
+    if (live.length) {
+      h.push('<div class="small dim" style="margin:12px 0 2px">代表产品</div>');
+      for (var j=0;j<live.length;j++) h.push(row(live[j]));
+    }
     return h.join("");
   }
 
