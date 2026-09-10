@@ -1,80 +1,204 @@
 {
-  "_readme": "公司产品档案：人工维护。免费数据源里没有「哪款游戏属于哪家公司」这种知识，所以这张表要你自己填。填了 taptap 之后，评分、好评率、评价数、上线时间、在测状态都会自动抓。",
-
-  "_how_to_get_taptap_id": "在 TapTap 里打开产品页，地址栏 /app/ 后面那串数字就是。也可以直接粘贴完整链接，程序会自己解析。",
-
-  "_schema": {
-    "company": "股票代码：A股 6 位，港股 5 位",
-    "name": "公司名",
-    "note": "公司层面备注，可选",
-    "products": [
-      {
-        "name": "产品名，必填",
-        "type": "自研 | 代理 | 发行 | 平台 | 投资",
-        "status": "运营中 | 已上线 | 测试中 | 已定档 | 研发中 | 已停运",
-        "launchDate": "YYYY-MM，已上线的填，填了会显示上线多久",
-        "expectedDate": "YYYY-MM，测试中/待上线的填，会算倒计时并进推送",
-        "taptap": "TapTap 的 app id 或完整链接，填了就自动抓评分",
-        "note": "口碑备注，人工写。评分是客观的，这句是你自己的判断"
-      }
-    ]
-  },
-
-  "_example": {
-    "company": "09999",
-    "name": "网易",
-    "products": [
-      { "name": "梦幻西游手游", "type": "自研", "status": "运营中", "launchDate": "2015-03", "taptap": "", "note": "长线运营的标杆，流水稳定" }
-    ]
-  },
+  "_readme": "公司产品档案。产品清单一轮轮补，TapTap 的评分/好评率/上线时间/在测状态都是自动抓的，不用手填。aliases 用于核对 TapTap 上的厂商字段是不是这家公司。",
+  "_how_it_works": "程序会按产品名去 Bing 站内搜索找 TapTap id，找到后缓存到 data/taptap-cache.json，之后每天只按已知 id 抓，不再搜索。搜不到的下次运行会重试。",
+  "_verify": "每个产品都会用 TapTap 的「厂商/发行/供应商」字段和公司的 aliases 做核对，对不上的会在页面上标出来。",
+  "_status": "status 是初始猜测，如果 TapTap 的 title_labels 标了「测试」「预约」，会以 TapTap 的为准。launchDate 留空则由 TapTap 提供，比人工写准。",
 
   "updatedAt": "2026-09-10",
 
   "companies": {
-    "02400": {
-      "name": "心动公司",
-      "note": "自研 + 发行 + TapTap 平台三条腿",
-      "products": [
-        {
-          "name": "TapTap",
-          "type": "平台",
-          "status": "运营中",
-          "taptap": "",
-          "note": "国内最大的手游社区与分发平台。评分体系是行业里最有公信力的公开口碑来源，但社区氛围和商业化一直被讨论"
-        },
-        {
-          "name": "心动小镇",
-          "type": "自研",
-          "status": "已上线",
-          "launchDate": "2023-07",
-          "taptap": "",
-          "note": ""
-        },
-        {
-          "name": "火炬之光：无限",
-          "type": "发行",
-          "status": "已上线",
-          "launchDate": "2022-10",
-          "taptap": "",
-          "note": "赛季制刷宝 ARPG，核心玩家口碑不错，付费设计有争议"
-        },
-        {
-          "name": "仙境传说 RO2",
-          "type": "自研",
-          "status": "测试中",
-          "expectedDate": "",
-          "taptap": "",
-          "note": "在测。IP 有基础，但前代产品的口碑会形成拖累，测试反馈是关键观察点"
-        },
-        {
-          "name": "不休的乌拉拉",
-          "type": "发行",
-          "status": "已上线",
-          "launchDate": "2018-12",
-          "taptap": "142793",
-          "note": "放置养成品类，评分由接口自动抓取"
-        }
-      ]
-    }
+    "002555": { "name": "三七互娱", "aliases": ["三七", "极光", "37"], "note": "A股游戏出海龙头，SLG 为主力", "products": [
+      { "name": "斗罗大陆：魂师对决", "type": "自研", "status": "运营中", "taptap": "", "note": "IP 改编，公司国内流水主力" },
+      { "name": "叫我大掌柜", "type": "自研", "status": "运营中", "taptap": "", "note": "模拟经营，长线运营表现好" },
+      { "name": "Puzzles & Survival", "type": "自研", "status": "运营中", "taptap": "", "note": "出海王牌，SLG+消除，海外收入支柱" },
+      { "name": "凡人修仙传：大道", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" }
+    ] },
+
+    "002517": { "name": "恺英网络", "aliases": ["恺英"], "note": "传奇类起家，近年靠新游重回增长", "products": [
+      { "name": "烈焰觉醒", "type": "自研", "status": "运营中", "taptap": "", "note": "2026 上半年收入高增的主要来源" },
+      { "name": "原始传奇", "type": "代理", "status": "运营中", "taptap": "", "note": "传奇类长线产品" },
+      { "name": "蓝月传奇", "type": "代理", "status": "运营中", "taptap": "" }
+    ] },
+
+    "002174": { "name": "游族网络", "aliases": ["游族"], "note": "", "products": [
+      { "name": "少年三国志", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "少年三国志2", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "权力的游戏 凛冬将至", "type": "代理", "status": "运营中", "taptap": "" },
+      { "name": "富翁派对", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" }
+    ] },
+
+    "002558": { "name": "巨人网络", "aliases": ["巨人"], "note": "征途 IP 基本盘，小程序游戏是新增长点", "products": [
+      { "name": "征途", "type": "自研", "status": "运营中", "taptap": "", "note": "公司起家产品，端游常青" },
+      { "name": "原始征途", "type": "自研", "status": "运营中", "taptap": "", "note": "征途 IP 手游化" },
+      { "name": "球球大作战", "type": "代理", "status": "运营中", "taptap": "" }
+    ] },
+
+    "002602": { "name": "世纪华通", "aliases": ["盛趣", "点点互动", "天游", "世纪华通"], "note": "盛趣 + 点点互动双主业", "products": [
+      { "name": "无尽冬日", "type": "自研", "status": "运营中", "taptap": "", "note": "点点互动出品，2023 年出海爆款，SLG 品类第一梯队" },
+      { "name": "传奇世界", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "热血传奇", "type": "代理", "status": "运营中", "taptap": "" }
+    ] },
+
+    "002624": { "name": "完美世界", "aliases": ["完美"], "note": "端游 IP 底蕴深，但近年业绩承压", "products": [
+      { "name": "幻塔", "type": "自研", "status": "运营中", "taptap": "", "note": "开放世界，上线时口碑分化" },
+      { "name": "完美世界手游", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "梦幻新诛仙", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "诛仙手游", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "002425": { "name": "凯撒文化", "aliases": ["凯撒"], "note": "", "products": [
+      { "name": "三国志2017", "type": "发行", "status": "运营中", "taptap": "" }
+    ] },
+
+    "002919": { "name": "名臣健康", "aliases": ["名臣"], "note": "日化起家，游戏是并购来的业务", "products": [] },
+
+    "002605": { "name": "姚记科技", "aliases": ["姚记", "成蹊"], "note": "扑克牌起家，休闲游戏 + 互联网营销", "products": [
+      { "name": "小美斗地主", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "300002": { "name": "神州泰岳", "aliases": ["壳木", "神州泰岳"], "note": "游戏业务主体是壳木软件，出海 SLG", "products": [
+      { "name": "旭日之城", "type": "自研", "status": "运营中", "taptap": "", "note": "War and Order，出海 SLG 长线产品" },
+      { "name": "Age of Origins", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "300031": { "name": "宝通科技", "aliases": ["易幻", "宝通"], "note": "海外发行商 + 工业输送带双主业", "products": [] },
+
+    "300043": { "name": "星辉娱乐", "aliases": ["星辉"], "note": "玩具 + 足球 + 游戏", "products": [
+      { "name": "守卫穹顶", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-07 拿到版号" }
+    ] },
+
+    "300113": { "name": "顺网科技", "aliases": ["顺网"], "note": "网吧管理与云电脑平台，不是纯游戏公司", "products": [] },
+
+    "300299": { "name": "富春股份", "aliases": ["富春", "骏梦"], "note": "", "products": [] },
+
+    "300315": { "name": "掌趣科技", "aliases": ["掌趣"], "note": "", "products": [
+      { "name": "全民奇迹", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "拳皇98终极之战OL", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "开心美食街", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" }
+    ] },
+
+    "300459": { "name": "汤姆猫", "aliases": ["汤姆猫", "Outfit7", "金科"], "note": "会说话的汤姆猫 IP 运营方", "products": [
+      { "name": "会说话的汤姆猫", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "300467": { "name": "迅游科技", "aliases": ["迅游"], "note": "网游加速器，工具类", "products": [
+      { "name": "迅游手游加速器", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "300494": { "name": "盛天网络", "aliases": ["盛天"], "note": "网吧平台 + 游戏发行", "products": [
+      { "name": "易乐游", "type": "自研", "status": "运营中", "taptap": "", "note": "网吧内容管理平台" },
+      { "name": "末日回响", "type": "发行", "status": "已定档", "taptap": "", "note": "2026-07 拿到版号" }
+    ] },
+
+    "300533": { "name": "冰川网络", "aliases": ["冰川"], "note": "", "products": [
+      { "name": "远征", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "超能世界", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "我的末日基地", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" }
+    ] },
+
+    "600633": { "name": "浙数文化", "aliases": ["边锋", "浙数"], "note": "数字文化 + 边锋网络", "products": [
+      { "name": "三国杀", "type": "自研", "status": "运营中", "taptap": "", "note": "边锋网络旗下，长线 IP" }
+    ] },
+
+    "600715": { "name": "文投控股", "aliases": ["文投"], "note": "影视为主", "products": [] },
+
+    "600892": { "name": "大晟文化", "aliases": ["大晟"], "note": "", "products": [] },
+
+    "603258": { "name": "电魂网络", "aliases": ["电魂"], "note": "", "products": [
+      { "name": "梦三国", "type": "自研", "status": "运营中", "taptap": "", "note": "公司基本盘，端游 MOBA" },
+      { "name": "梦三国手游", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "合合骑士团", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" },
+      { "name": "星落小筑", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-08 拿到版号" }
+    ] },
+
+    "603444": { "name": "吉比特", "aliases": ["雷霆", "吉比特"], "note": "发行主体是雷霆游戏，业内以长线运营著称", "products": [
+      { "name": "问道", "type": "自研", "status": "运营中", "taptap": "", "note": "公司现金流基石，运营近二十年" },
+      { "name": "一念逍遥", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "摩尔庄园", "type": "发行", "status": "运营中", "taptap": "" },
+      { "name": "奥比岛：梦想国度", "type": "发行", "status": "运营中", "taptap": "" }
+    ] },
+
+    "00700": { "name": "腾讯控股", "aliases": ["腾讯", "Tencent"], "note": "国内游戏市场绝对龙头", "products": [
+      { "name": "王者荣耀", "type": "自研", "status": "运营中", "taptap": "", "note": "国内手游流水第一梯队" },
+      { "name": "和平精英", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "金铲铲之战", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "地下城与勇士：起源", "type": "自研", "status": "运营中", "taptap": "", "note": "2024 年上线，端游 IP 手游化" },
+      { "name": "暗区突围", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "09999": { "name": "网易", "aliases": ["网易", "NetEase"], "note": "国内第二大游戏厂商", "products": [
+      { "name": "梦幻西游手游", "type": "自研", "status": "运营中", "taptap": "", "note": "长线运营标杆" },
+      { "name": "蛋仔派对", "type": "自研", "status": "运营中", "taptap": "", "note": "派对品类主力，年轻用户占比高" },
+      { "name": "第五人格", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "逆水寒手游", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "永劫无间手游", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "梦幻西游：再续前缘", "type": "自研", "status": "已定档", "taptap": "", "note": "2026-07 拿到版号" }
+    ] },
+
+    "02400": { "name": "心动公司", "aliases": ["心动", "XD"], "note": "自研 + 发行 + TapTap 平台三条腿", "products": [
+      { "name": "TapTap", "type": "平台", "status": "运营中", "taptap": "", "note": "国内最大的手游社区与分发平台，其评分是行业里公信力最高的公开口碑来源" },
+      { "name": "心动小镇", "type": "自研", "status": "运营中", "taptap": "", "note": "模拟经营，公司近年自研主力" },
+      { "name": "火炬之光：无限", "type": "发行", "status": "运营中", "taptap": "", "note": "赛季制刷宝 ARPG" },
+      { "name": "仙境传说 RO2", "type": "自研", "status": "测试中", "taptap": "", "note": "在测，IP 有基础但前代口碑形成拖累" },
+      { "name": "不休的乌拉拉", "type": "发行", "status": "运营中", "taptap": "142793" }
+    ] },
+
+    "00302": { "name": "中手游", "aliases": ["中手游", "CMGE"], "note": "IP 授权与发行，股价长期低迷", "products": [
+      { "name": "仙剑奇侠传：九野", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "00799": { "name": "IGG", "aliases": ["IGG"], "note": "出海 SLG 老牌厂商", "products": [
+      { "name": "王国纪元", "type": "自研", "status": "运营中", "taptap": "", "note": "Lords Mobile，公司唯一支柱级产品" }
+    ] },
+
+    "00777": { "name": "网龙", "aliases": ["网龙", "天晴"], "note": "游戏 + 教育双主业", "products": [
+      { "name": "魔域", "type": "自研", "status": "运营中", "taptap": "", "note": "公司长线现金牛" },
+      { "name": "英魂之刃", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "03888": { "name": "金山软件", "aliases": ["金山", "西山居", "Kingsoft"], "note": "金山办公 + 西山居游戏", "products": [
+      { "name": "剑网3", "type": "自研", "status": "运营中", "taptap": "", "note": "西山居旗舰端游，长线运营超十五年" },
+      { "name": "剑网3无界", "type": "自研", "status": "运营中", "taptap": "", "note": "剑网3 多端版本" }
+    ] },
+
+    "01119": { "name": "创梦天地", "aliases": ["创梦", "乐逗"], "note": "休闲游戏发行", "products": [
+      { "name": "梦幻花园", "type": "代理", "status": "运营中", "taptap": "" },
+      { "name": "地铁跑酷", "type": "代理", "status": "运营中", "taptap": "" }
+    ] },
+
+    "09990": { "name": "祖龙娱乐", "aliases": ["祖龙"], "note": "UE 引擎见长", "products": [
+      { "name": "龙族幻想", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "以闪亮之名", "type": "自研", "status": "运营中", "taptap": "", "note": "女性向 3D 换装，公司近年主力" }
+    ] },
+
+    "06633": { "name": "青瓷游戏", "aliases": ["青瓷"], "note": "放置类见长", "products": [
+      { "name": "最强蜗牛", "type": "自研", "status": "运营中", "taptap": "", "note": "公司成名作，放置品类" },
+      { "name": "提灯与地下城", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "09890": { "name": "贪玩", "aliases": ["贪玩", "中旭"], "note": "原中旭未来，以买量发行见长", "products": [
+      { "name": "原始传奇", "type": "发行", "status": "运营中", "taptap": "" }
+    ] },
+
+    "06820": { "name": "友谊时光", "aliases": ["友谊时光", "FriendTimes"], "note": "古风女性向", "products": [
+      { "name": "浮生为卿歌", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "凌云诺", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "03798": { "name": "家乡互动", "aliases": ["家乡互动"], "note": "地方棋牌", "products": [] },
+
+    "02100": { "name": "百奥家庭互动", "aliases": ["百奥", "天梯", "Baitian"], "note": "页游起家，IP 沉淀深", "products": [
+      { "name": "奥拉星", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "奥比岛", "type": "自研", "status": "运营中", "taptap": "" },
+      { "name": "食物语", "type": "自研", "status": "运营中", "taptap": "" }
+    ] },
+
+    "02660": { "name": "禅游科技", "aliases": ["禅游"], "note": "棋牌休闲", "products": [] },
+
+    "09626": { "name": "哔哩哔哩", "aliases": ["哔哩", "bilibili", "B站"], "note": "社区 + 游戏代理发行", "products": [
+      { "name": "三国：谋定天下", "type": "代理", "status": "运营中", "taptap": "", "note": "2024 年上线，SLG 品类，公司游戏业务翻身之作" },
+      { "name": "碧蓝航线", "type": "代理", "status": "运营中", "taptap": "" },
+      { "name": "Fate/Grand Order", "type": "代理", "status": "运营中", "taptap": "", "note": "国服代理，长线收入支柱" }
+    ] }
   }
 }

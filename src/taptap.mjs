@@ -47,10 +47,26 @@ export async function fetchTapTap(id) {
   // 4~5 星占比，作为「好评率」的粗略代理
   const good = (Number(votes["5"]) || 0) + (Number(votes["4"]) || 0);
 
+  // 发行 / 开发 / 上线日期藏在 information 里。
+  // 注意字段名不统一：有的产品用「发行」，有的用「厂商」。
+  const info = a.information || [];
+  const pick = (re) => info.find((x) => re.test(x.title || ""))?.text || null;
+  const publisher = pick(/^(发行|厂商|发行商)$/);
+  const developer = pick(/^(开发|研发|开发商)$/);
+  const supplier = pick(/供应商/);
+  const launchText = pick(/正式上线日期|上线日期/);
+  const launchDate = launchText
+    ? (/^(\d{4})-(\d{2})/.exec(launchText) || []).slice(1, 3).join("-") || null
+    : null;
+
   return {
     id: nid,
     title: a.title,
     labels: a.title_labels || [],
+    publisher,
+    developer,
+    supplier,
+    launchDate,
     score: a.stat?.rating?.score ? Number(a.stat.rating.score) : null,
     maxScore: a.stat?.rating?.max ?? 10,
     latestScore: a.stat?.rating?.latest_score && a.stat.rating.latest_score !== "0"
@@ -64,6 +80,57 @@ export async function fetchTapTap(id) {
     tags: (a.tags || []).map((t) => t.value || t).slice(0, 5),
     url: `https://www.taptap.cn/app/${nid}`,
   };
+}
+
+/**
+ * 按名字找 TapTap id。
+ *
+ * TapTap 自己没有可用的搜索接口（前端全客户端渲染），
+ * 所以借 Bing 的站内搜索：site:taptap.cn <名字>，从结果 URL 里抠出 /app/<id>。
+ */
+export async function searchTapTapId(name) {
+  // 查询式换几种，Bing 对 site: 后接路径的写法时好时坏
+  const queries = [`site:taptap.cn ${name}`, `site:taptap.cn/app ${name}`, `taptap ${name} 评分`];
+  const seen = new Set();
+  const ids = [];
+  for (const q of queries) {
+    if (ids.length >= 6) break;
+    try {
+      const res = await fetch(`https://cn.bing.com/search?q=${encodeURIComponent(q)}`, {
+        headers: HEADERS,
+        signal: AbortSignal.timeout(25000),
+      });
+      if (!res.ok) continue;
+      const html = await res.text();
+      for (const m of html.matchAll(/taptap\.cn\/app\/(\d{3,9})/g)) {
+        if (!seen.has(m[1])) {
+          seen.add(m[1]);
+          ids.push(m[1]);
+        }
+      }
+    } catch {
+      /* 换下一个查询式 */
+    }
+    if (ids.length) break;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  if (!ids.length) return null;
+
+  // 逐个核对标题，避免抓到不相关的页面
+  const norm = (s) => String(s || "").replace(/[\s（）()【】\-—:：]/g, "").toLowerCase();
+  const target = norm(name);
+  for (const id of ids.slice(0, 4)) {
+    try {
+      const d = await fetchTapTap(id);
+      const t = norm(d.title);
+      if (t.includes(target) || target.includes(t) || (target.length >= 3 && t.slice(0, 4) === target.slice(0, 4))) {
+        return d;
+      }
+    } catch {
+      /* 换下一个 */
+    }
+  }
+  return null;
 }
 
 /** 批量取，限量并发 */

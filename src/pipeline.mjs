@@ -171,7 +171,7 @@ export async function buildSnapshot({ onProgress } = {}) {
   log("读取产品档案");
   let profiles = { companies: {}, taptapFetched: 0 };
   try {
-    profiles = await buildProfiles();
+    profiles = await buildProfiles({ searchBudget: 30 });
     log(
       `产品档案：${Object.keys(profiles.companies).length} 家公司，` +
         `抓取 TapTap ${profiles.taptapFetched} 个`

@@ -392,6 +392,8 @@
         if (t.goodRate != null) meta.push('好评率 '+t.goodRate+'%');
         if (t.reviewCount) meta.push(t.reviewCount+' 条评价');
         if (t.labels && t.labels.length) meta.push('状态：'+t.labels.join('/'));
+        var house = t.publisher || t.developer;
+        if (house) meta.push('TapTap 厂商：'+house);
       } else if (p.tapError) {
         meta.push('TapTap 抓取失败');
       } else if (p.taptap) {
@@ -404,6 +406,9 @@
         meta.push('时间待定');
       }
 
+      var warn = p.verify === "mismatch"
+        ? '<div class="prod-note" style="color:var(--warn)">⚠ TapTap 上的厂商名和这家公司的名字对不上，归属需要你复核一下</div>'
+        : '';
       return '<div class="prod'+(p.soonDays!=null?' soon':'')+'">'
         + '<div class="prod-top"><span class="prod-name">'+esc(p.name)+'</span>'
         + (p.type?'<span class="chip">'+esc(p.type)+'</span>':'')
@@ -412,6 +417,7 @@
         + '</div>'
         + (meta.length?'<div class="prod-meta">'+meta.join(' · ')+'</div>':'')
         + (p.note?'<div class="prod-note">'+esc(p.note)+'</div>':'')
+        + warn
         + '</div>';
     }
 

@@ -235,6 +235,9 @@ export function buildMarkdown(snap) {
               (p.tap.reviewCount ? `，${p.tap.reviewCount} 条评价）` : p.tap.goodRate != null ? "）" : "") +
               (p.tap.labels?.length ? ` 状态 ${p.tap.labels.join("/")}` : "")
           );
+          const house = p.tap.publisher || p.tap.developer;
+          if (house) bits.push(`厂商 ${house}`);
+          if (p.verify === "mismatch") bits.push("⚠ 厂商名对不上，归属待复核");
         }
         if (p.launchDate) bits.push(`上线 ${p.launchDate}${p.monthsLive != null ? `（${p.monthsLive} 个月）` : ""}`);
         if (p.expectedDate)
