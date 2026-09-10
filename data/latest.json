@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T07:54:41.324Z",
+  "generatedAt": "2026-09-10T08:07:49.716Z",
   "tradeDate": "2026-09-10",
   "dataDate": "2026-09-10",
   "sector": {
@@ -7401,18 +7401,18 @@
       "market": "HK",
       "code": "02400",
       "name": "心动公司",
-      "price": 40.28,
-      "chgPct": -2.33,
-      "turnover": 0.58,
-      "totalCap": 19490701062,
-      "peDyn": 11.5,
-      "peTtm": 11.5,
-      "pb": 4.24,
+      "price": 40.08,
+      "chgPct": -2.81,
+      "turnover": 0.59,
+      "totalCap": 19393924989,
+      "peDyn": 11.45,
+      "peTtm": 11.45,
+      "pb": 4.22,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 58.7,
-        "ma60": 43.95,
+        "pricePct": 58.6,
+        "ma60": 43.94,
         "ma250": 63.45,
         "low250": 38.4,
         "high250": 91.8,
@@ -7423,7 +7423,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 61.5,
+        "compositePct": 61.3,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7437,8 +7437,8 @@
         "addHigh": 20.5,
         "trimLow": 47,
         "trimHigh": 63.15,
-        "toAddPricePct": -49.1,
-        "toTrimPricePct": 16.7
+        "toAddPricePct": -48.9,
+        "toTrimPricePct": 17.3
       },
       "status": {
         "label": "持有区",
@@ -7455,18 +7455,18 @@
       "market": "HK",
       "code": "09999",
       "name": "网易",
-      "price": 183.1,
-      "chgPct": -0.05,
-      "turnover": 2.7,
-      "totalCap": 587523938789,
-      "peDyn": 15.89,
-      "peTtm": 15.89,
-      "pb": 3.05,
+      "price": 181.6,
+      "chgPct": -0.87,
+      "turnover": 2.79,
+      "totalCap": 582710798930,
+      "peDyn": 15.76,
+      "peTtm": 15.76,
+      "pb": 3.03,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 62.6,
-        "ma60": 197.24,
+        "pricePct": 61.3,
+        "ma60": 197.22,
         "ma250": 202.47,
         "low250": 170.5,
         "high250": 246.4,
@@ -7477,7 +7477,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 78.4,
+        "compositePct": 77.4,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7491,8 +7491,8 @@
         "addHigh": 144,
         "trimLow": 173,
         "trimHigh": 195.5,
-        "toAddPricePct": -21.4,
-        "toTrimPricePct": -5.5
+        "toAddPricePct": -20.7,
+        "toTrimPricePct": -4.7
       },
       "status": {
         "label": "减仓区",
@@ -7509,13 +7509,13 @@
       "market": "HK",
       "code": "00777",
       "name": "网龙",
-      "price": 7.35,
-      "chgPct": -1.41,
-      "turnover": 0.29,
-      "totalCap": 3866836830,
-      "peDyn": 22,
-      "peTtm": 22,
-      "pb": 0.64,
+      "price": 7.31,
+      "chgPct": -1.95,
+      "turnover": 0.3,
+      "totalCap": 3845792820,
+      "peDyn": 21.88,
+      "peTtm": 21.88,
+      "pb": 0.63,
       "ps": null,
       "consensus": null,
       "priceContext": {
@@ -7545,8 +7545,8 @@
         "addHigh": 11.04,
         "trimLow": 15.92,
         "trimHigh": 18.02,
-        "toAddPricePct": 50.2,
-        "toTrimPricePct": 116.6
+        "toAddPricePct": 51,
+        "toTrimPricePct": 117.8
       },
       "status": {
         "label": "深度低估",
@@ -7618,17 +7618,17 @@
       "market": "HK",
       "code": "00302",
       "name": "中手游",
-      "price": 0.189,
-      "chgPct": -3.08,
+      "price": 0.188,
+      "chgPct": -3.59,
       "turnover": 0.02,
-      "totalCap": 589370908,
+      "totalCap": 586252544,
       "peDyn": -0.57,
       "peTtm": -0.57,
       "pb": 0.22,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 3.1,
+        "pricePct": 2.9,
         "ma60": 0.19,
         "ma250": 0.31,
         "low250": 0.17,
@@ -7640,7 +7640,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 1.6,
+        "compositePct": 1.5,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7654,8 +7654,8 @@
         "addHigh": 0.75,
         "trimLow": 2.11,
         "trimHigh": 3.08,
-        "toAddPricePct": 296.8,
-        "toTrimPricePct": 1016.4
+        "toAddPricePct": 298.9,
+        "toTrimPricePct": 1022.3
       },
       "status": {
         "label": "深度低估",
@@ -7674,7 +7674,7 @@
       "name": "创梦天地",
       "price": 0.46,
       "chgPct": -3.16,
-      "turnover": 0.16,
+      "turnover": 0.18,
       "totalCap": 938867206,
       "peDyn": 81.57,
       "peTtm": 81.57,
@@ -7726,17 +7726,17 @@
       "market": "HK",
       "code": "03798",
       "name": "家乡互动",
-      "price": 1.22,
-      "chgPct": 0.83,
+      "price": 1.23,
+      "chgPct": 1.65,
       "turnover": 0,
-      "totalCap": 1539114790,
-      "peDyn": 22.05,
-      "peTtm": 22.05,
+      "totalCap": 1551730485,
+      "peDyn": 22.23,
+      "peTtm": 22.23,
       "pb": 0.7,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 25.5,
+        "pricePct": 26.5,
         "ma60": 1.27,
         "ma250": 1.3,
         "low250": 0.94,
@@ -7748,7 +7748,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 14.5,
+        "compositePct": 15.1,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7762,11 +7762,11 @@
         "addHigh": 1.37,
         "trimLow": 1.82,
         "trimHigh": 2.47,
-        "toAddPricePct": 12.3,
-        "toTrimPricePct": 49.2
+        "toAddPricePct": 11.4,
+        "toTrimPricePct": 48
       },
       "status": {
-        "label": "深度低估",
+        "label": "加仓区",
         "tone": "buy"
       },
       "invalidations": [
@@ -7780,17 +7780,17 @@
       "market": "HK",
       "code": "00799",
       "name": "IGG",
-      "price": 3.06,
-      "chgPct": -1.13,
-      "turnover": 0.06,
-      "totalCap": 3504206733,
-      "peDyn": 6.18,
-      "peTtm": 6.18,
+      "price": 3.055,
+      "chgPct": -1.29,
+      "turnover": 0.07,
+      "totalCap": 3498480905,
+      "peDyn": 6.17,
+      "peTtm": 6.17,
       "pb": 1.1,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 15.3,
+        "pricePct": 15,
         "ma60": 3.34,
         "ma250": 3.59,
         "low250": 2.94,
@@ -7802,7 +7802,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 17.6,
+        "compositePct": 17.4,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7816,8 +7816,8 @@
         "addHigh": 3.28,
         "trimLow": 4.27,
         "trimHigh": 7.25,
-        "toAddPricePct": 7.2,
-        "toTrimPricePct": 39.5
+        "toAddPricePct": 7.4,
+        "toTrimPricePct": 39.8
       },
       "status": {
         "label": "加仓区",
@@ -7834,17 +7834,17 @@
       "market": "HK",
       "code": "03888",
       "name": "金山软件",
-      "price": 24.18,
-      "chgPct": 0.58,
-      "turnover": 0.48,
-      "totalCap": 33233966696,
-      "peDyn": 10.35,
-      "peTtm": 10.35,
-      "pb": 1.07,
+      "price": 24.32,
+      "chgPct": 1.16,
+      "turnover": 0.49,
+      "totalCap": 33426388339,
+      "peDyn": 10.41,
+      "peTtm": 10.41,
+      "pb": 1.08,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 27.6,
+        "pricePct": 28.7,
         "ma60": 24.67,
         "ma250": 27.29,
         "low250": 21.16,
@@ -7856,7 +7856,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 20.9,
+        "compositePct": 21.8,
         "samples": 1401,
         "pePct": null,
         "pbPct": null,
@@ -7870,8 +7870,8 @@
         "addHigh": 25.4,
         "trimLow": 33.65,
         "trimHigh": 38.25,
-        "toAddPricePct": 5,
-        "toTrimPricePct": 39.2
+        "toAddPricePct": 4.4,
+        "toTrimPricePct": 38.4
       },
       "status": {
         "label": "加仓区",
@@ -7891,18 +7891,18 @@
       "market": "HK",
       "code": "09626",
       "name": "哔哩哔哩-W",
-      "price": 121.7,
-      "chgPct": -2.64,
-      "turnover": 1.21,
-      "totalCap": 51726651187,
-      "peDyn": 29.93,
-      "peTtm": 29.93,
-      "pb": 2.82,
+      "price": 122.6,
+      "chgPct": -1.92,
+      "turnover": 1.26,
+      "totalCap": 52109181886,
+      "peDyn": 30.15,
+      "peTtm": 30.15,
+      "pb": 2.84,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 31.7,
-        "ma60": 135.65,
+        "pricePct": 32.5,
+        "ma60": 135.67,
         "ma250": 185.82,
         "low250": 119.7,
         "high250": 281,
@@ -7913,7 +7913,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 21.7,
+        "compositePct": 22.7,
         "samples": 1343,
         "pePct": null,
         "pbPct": null,
@@ -7927,8 +7927,8 @@
         "addHigh": 133,
         "trimLow": 199.4,
         "trimHigh": 292.82,
-        "toAddPricePct": 9.3,
-        "toTrimPricePct": 63.8
+        "toAddPricePct": 8.5,
+        "toTrimPricePct": 62.6
       },
       "status": {
         "label": "加仓区",
@@ -8001,20 +8001,20 @@
       "market": "HK",
       "code": "09890",
       "name": "贪玩",
-      "price": 9.67,
-      "chgPct": -3.11,
+      "price": 9.6,
+      "chgPct": -3.81,
       "turnover": 0.17,
-      "totalCap": 5011701051,
-      "peDyn": 4.18,
-      "peTtm": 4.18,
-      "pb": 1.04,
+      "totalCap": 4975421933,
+      "peDyn": 4.15,
+      "peTtm": 4.15,
+      "pb": 1.03,
       "ps": null,
       "consensus": null,
       "priceContext": {
-        "pricePct": 23.5,
+        "pricePct": 23.4,
         "ma60": 10.42,
         "ma250": 14.48,
-        "low250": 9.67,
+        "low250": 9.6,
         "high250": 21.44,
         "low750": 5.06,
         "high750": 71,
@@ -8023,7 +8023,7 @@
       "valuation": {
         "ok": true,
         "method": "price",
-        "compositePct": 23.5,
+        "compositePct": 23.4,
         "samples": 725,
         "pePct": null,
         "pbPct": null,
@@ -8037,8 +8037,8 @@
         "addHigh": 10.4,
         "trimLow": 16.3,
         "trimHigh": 23.17,
-        "toAddPricePct": 7.5,
-        "toTrimPricePct": 68.6
+        "toAddPricePct": 8.3,
+        "toTrimPricePct": 69.8
       },
       "status": {
         "label": "加仓区",
@@ -8058,7 +8058,7 @@
       "name": "祖龙娱乐",
       "price": 1.705,
       "chgPct": -2.01,
-      "turnover": 0.01,
+      "turnover": 0.02,
       "totalCap": 1364614874,
       "peDyn": -12.79,
       "peTtm": -12.79,
@@ -8160,74 +8160,20 @@
     },
     {
       "market": "HK",
-      "code": "02660",
-      "name": "禅游科技",
-      "price": 2.32,
-      "chgPct": -1.28,
-      "turnover": 0.04,
-      "totalCap": 2404115514,
-      "peDyn": 6.35,
-      "peTtm": 6.35,
-      "pb": 0.83,
-      "ps": null,
-      "consensus": null,
-      "priceContext": {
-        "pricePct": 24.8,
-        "ma60": 2.29,
-        "ma250": 2.39,
-        "low250": 2.13,
-        "high250": 2.83,
-        "low750": 2.05,
-        "high750": 5.71,
-        "bars": 1401
-      },
-      "valuation": {
-        "ok": true,
-        "method": "price",
-        "compositePct": 49.5,
-        "samples": 1401,
-        "pePct": null,
-        "pbPct": null,
-        "psPct": null,
-        "reason": null
-      },
-      "bands": {
-        "addPrice": 1.66,
-        "trimPrice": 2.8,
-        "addLow": 1.31,
-        "addHigh": 1.66,
-        "trimLow": 2.8,
-        "trimHigh": 3.27,
-        "toAddPricePct": -28.4,
-        "toTrimPricePct": 20.7
-      },
-      "status": {
-        "label": "持有区",
-        "tone": "hold"
-      },
-      "invalidations": [
-        "股价跌破年线，中期趋势转弱"
-      ],
-      "aliases": [
-        "禅游"
-      ]
-    },
-    {
-      "market": "HK",
       "code": "00700",
       "name": "腾讯控股",
-      "price": 427.2,
-      "chgPct": -1.57,
-      "turnover": 0.22,
-      "totalCap": 3888870567168,
-      "peDyn": 14.57,
-      "peTtm": 14.57,
+      "price": 426.8,
+      "chgPct": -1.66,
+      "turnover": 0.23,
+      "totalCap": 3885229302592,
+      "peDyn": 14.56,
+      "peTtm": 14.56,
       "pb": 2.97,
       "ps": null,
       "consensus": null,
       "priceContext": {
         "pricePct": 46.4,
-        "ma60": 451.32,
+        "ma60": 451.31,
         "ma250": 538.32,
         "low250": 411.8,
         "high250": 677.5,
@@ -8253,7 +8199,7 @@
         "trimLow": 492.2,
         "trimHigh": 595.5,
         "toAddPricePct": -17,
-        "toTrimPricePct": 15.2
+        "toTrimPricePct": 15.3
       },
       "status": {
         "label": "持有区",
@@ -8265,9 +8211,140 @@
       "aliases": [
         "腾讯"
       ]
+    },
+    {
+      "market": "HK",
+      "code": "02660",
+      "name": "禅游科技",
+      "price": 2.345,
+      "chgPct": -0.21,
+      "turnover": 0.04,
+      "totalCap": 2430021931,
+      "peDyn": 6.42,
+      "peTtm": 6.42,
+      "pb": 0.84,
+      "ps": null,
+      "consensus": null,
+      "priceContext": {
+        "pricePct": 28.6,
+        "ma60": 2.29,
+        "ma250": 2.39,
+        "low250": 2.13,
+        "high250": 2.83,
+        "low750": 2.05,
+        "high750": 5.71,
+        "bars": 1401
+      },
+      "valuation": {
+        "ok": true,
+        "method": "price",
+        "compositePct": 51.5,
+        "samples": 1401,
+        "pePct": null,
+        "pbPct": null,
+        "psPct": null,
+        "reason": null
+      },
+      "bands": {
+        "addPrice": 1.66,
+        "trimPrice": 2.8,
+        "addLow": 1.31,
+        "addHigh": 1.66,
+        "trimLow": 2.8,
+        "trimHigh": 3.27,
+        "toAddPricePct": -29.2,
+        "toTrimPricePct": 19.4
+      },
+      "status": {
+        "label": "持有区",
+        "tone": "hold"
+      },
+      "invalidations": [
+        "股价跌破年线，中期趋势转弱"
+      ],
+      "aliases": [
+        "禅游"
+      ]
     }
   ],
   "details": {
+    "002555": {
+      "announcements": [
+        {
+          "date": "2026-09-09",
+          "title": "三七互娱:关于参加2026年安徽辖区上市公司投资者网上集体接待日活动的公告",
+          "url": "https://data.eastmoney.com/notices/detail/002555/AN202609081829128819.html"
+        }
+      ],
+      "reports": [
+        {
+          "date": "2026-08-28",
+          "title": "游戏储备及AI布局稳步推进，关注新游后续表现",
+          "org": "太平洋",
+          "rating": "增持",
+          "epsThisYear": 1.32,
+          "epsNextYear": 1.39,
+          "peThisYear": 14,
+          "peNextYear": 13,
+          "url": "https://data.eastmoney.com/report/info/AP202608281828598301.html"
+        },
+        {
+          "date": "2026-08-28",
+          "title": "2026年半年报点评：业绩阶段性承压，海外新品表现亮眼",
+          "org": "东吴证券",
+          "rating": "买入",
+          "epsThisYear": 1.27,
+          "epsNextYear": 1.45,
+          "peThisYear": 14.27,
+          "peNextYear": 12.51,
+          "url": "https://data.eastmoney.com/report/info/AP202608281828596853.html"
+        },
+        {
+          "date": "2026-05-05",
+          "title": "业绩稳健增长，多款SLG储备有望开启新品周期",
+          "org": "太平洋",
+          "rating": "增持",
+          "epsThisYear": 1.43,
+          "epsNextYear": 1.55,
+          "peThisYear": 15,
+          "peNextYear": 14,
+          "url": "https://data.eastmoney.com/report/info/AP202605051821967738.html"
+        },
+        {
+          "date": "2026-04-22",
+          "title": "2025年报点评：业绩低于预期，关注新游上线进展",
+          "org": "东吴证券",
+          "rating": "买入",
+          "epsThisYear": 1.43,
+          "epsNextYear": 1.54,
+          "peThisYear": 15.29,
+          "peNextYear": 14.24,
+          "url": "https://data.eastmoney.com/report/info/AP202604221821433398.html"
+        },
+        {
+          "date": "2025-11-03",
+          "title": "利润表现优秀，新游储备丰富",
+          "org": "华安证券",
+          "rating": "买入",
+          "epsThisYear": 1.5,
+          "epsNextYear": 1.6,
+          "peThisYear": 13.9,
+          "peNextYear": 12.87,
+          "url": "https://data.eastmoney.com/report/info/AP202511031774297346.html"
+        },
+        {
+          "date": "2025-10-30",
+          "title": "2025年三季报点评：业绩超预期，关注新品上线进展",
+          "org": "东吴证券",
+          "rating": "买入",
+          "epsThisYear": 1.51,
+          "epsNextYear": 1.55,
+          "peThisYear": 14.07,
+          "peNextYear": 13.65,
+          "url": "https://data.eastmoney.com/report/info/AP202510301771589426.html"
+        }
+      ]
+    },
     "002517": {
       "announcements": [],
       "reports": [
@@ -8512,83 +8589,6 @@
           "peThisYear": 19.2,
           "peNextYear": 16.3,
           "url": "https://data.eastmoney.com/report/info/AP202510301771937291.html"
-        }
-      ]
-    },
-    "002555": {
-      "announcements": [
-        {
-          "date": "2026-09-09",
-          "title": "三七互娱:关于参加2026年安徽辖区上市公司投资者网上集体接待日活动的公告",
-          "url": "https://data.eastmoney.com/notices/detail/002555/AN202609081829128819.html"
-        }
-      ],
-      "reports": [
-        {
-          "date": "2026-08-28",
-          "title": "游戏储备及AI布局稳步推进，关注新游后续表现",
-          "org": "太平洋",
-          "rating": "增持",
-          "epsThisYear": 1.32,
-          "epsNextYear": 1.39,
-          "peThisYear": 14,
-          "peNextYear": 13,
-          "url": "https://data.eastmoney.com/report/info/AP202608281828598301.html"
-        },
-        {
-          "date": "2026-08-28",
-          "title": "2026年半年报点评：业绩阶段性承压，海外新品表现亮眼",
-          "org": "东吴证券",
-          "rating": "买入",
-          "epsThisYear": 1.27,
-          "epsNextYear": 1.45,
-          "peThisYear": 14.27,
-          "peNextYear": 12.51,
-          "url": "https://data.eastmoney.com/report/info/AP202608281828596853.html"
-        },
-        {
-          "date": "2026-05-05",
-          "title": "业绩稳健增长，多款SLG储备有望开启新品周期",
-          "org": "太平洋",
-          "rating": "增持",
-          "epsThisYear": 1.43,
-          "epsNextYear": 1.55,
-          "peThisYear": 15,
-          "peNextYear": 14,
-          "url": "https://data.eastmoney.com/report/info/AP202605051821967738.html"
-        },
-        {
-          "date": "2026-04-22",
-          "title": "2025年报点评：业绩低于预期，关注新游上线进展",
-          "org": "东吴证券",
-          "rating": "买入",
-          "epsThisYear": 1.43,
-          "epsNextYear": 1.54,
-          "peThisYear": 15.29,
-          "peNextYear": 14.24,
-          "url": "https://data.eastmoney.com/report/info/AP202604221821433398.html"
-        },
-        {
-          "date": "2025-11-03",
-          "title": "利润表现优秀，新游储备丰富",
-          "org": "华安证券",
-          "rating": "买入",
-          "epsThisYear": 1.5,
-          "epsNextYear": 1.6,
-          "peThisYear": 13.9,
-          "peNextYear": 12.87,
-          "url": "https://data.eastmoney.com/report/info/AP202511031774297346.html"
-        },
-        {
-          "date": "2025-10-30",
-          "title": "2025年三季报点评：业绩超预期，关注新品上线进展",
-          "org": "东吴证券",
-          "rating": "买入",
-          "epsThisYear": 1.51,
-          "epsNextYear": 1.55,
-          "peThisYear": 14.07,
-          "peNextYear": 13.65,
-          "url": "https://data.eastmoney.com/report/info/AP202510301771589426.html"
         }
       ]
     }
@@ -9161,6 +9161,17 @@
         ]
       },
       {
+        "code": "002517",
+        "kind": "报告",
+        "date": "2026-08-28",
+        "title": "2026H1业绩高增，新游储备及AI布局持续推进",
+        "url": "https://data.eastmoney.com/report/info/AP202608281828597025.html",
+        "org": "太平洋",
+        "tags": [
+          "新游"
+        ]
+      },
+      {
         "code": "002555",
         "kind": "报告",
         "date": "2026-08-28",
@@ -9177,17 +9188,6 @@
         "date": "2026-08-28",
         "title": "游戏储备及AI布局稳步推进，关注新游后续表现",
         "url": "https://data.eastmoney.com/report/info/AP202608281828598301.html",
-        "org": "太平洋",
-        "tags": [
-          "新游"
-        ]
-      },
-      {
-        "code": "002517",
-        "kind": "报告",
-        "date": "2026-08-28",
-        "title": "2026H1业绩高增，新游储备及AI布局持续推进",
-        "url": "https://data.eastmoney.com/report/info/AP202608281828597025.html",
         "org": "太平洋",
         "tags": [
           "新游"
