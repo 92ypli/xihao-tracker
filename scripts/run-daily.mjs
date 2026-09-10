@@ -91,7 +91,25 @@ async function buildSite(snap) {
   }
 
   const tpl = readFileSync(tplPath, "utf8");
-  const payload = await buildPayload(snap, PASSWORD);
+
+  // 页面只需要展示用的字段。sector.series 有 60KB 而网页根本不画图，
+  // 一并砍掉；页面越小，跨境网络下被截断的概率越低。
+  const slim = {
+    ...snap,
+    sector: { ...snap.sector, series: undefined },
+    details: Object.fromEntries(
+      Object.entries(snap.details || {}).map(([k, v]) => [
+        k,
+        {
+          announcements: (v.announcements || []).slice(0, 20),
+          reports: (v.reports || []).slice(0, 12),
+        },
+      ])
+    ),
+    industryReports: (snap.industryReports || []).slice(0, 15),
+  };
+
+  const payload = await buildPayload(slim, PASSWORD);
   const html = tpl.replace(
     "__PAYLOAD__",
     JSON.stringify(payload).replace(/</g, "\\u003c")

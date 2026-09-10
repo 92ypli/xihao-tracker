@@ -13,6 +13,7 @@ import { fetchLicense } from "./license.mjs";
 import { analyzeStock, analyzeSector, analyzeByPrice, buildConsensus, synthesizeIndex } from "./analyze.mjs";
 import { buildCatalystBoard, buildLicenseKeywords } from "./catalysts.mjs";
 import { buildProfiles, upcomingFromProfiles } from "./profiles.mjs";
+import { fetchMacro } from "./macro.mjs";
 import { CONFIG, yearsAgo, beijingToday } from "./config.mjs";
 
 const log = (msg) => console.log(`[pipeline] ${msg}`);
@@ -181,6 +182,15 @@ export async function buildSnapshot({ onProgress } = {}) {
   }
   const upcoming = upcomingFromProfiles(profiles);
 
+  log("拉取隔夜外盘");
+  let macro = { ok: false, items: [] };
+  try {
+    macro = await fetchMacro();
+    log(`外盘：${macro.items.length} 个指标，背景${macro.background?.tone || "-"}`);
+  } catch (e) {
+    log(`外盘拉取失败: ${e.message}`);
+  }
+
   log(`完成，耗时 ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
   return {
@@ -197,6 +207,7 @@ export async function buildSnapshot({ onProgress } = {}) {
     catalysts,
     profiles,
     upcoming,
+    macro,
     focus: CONFIG.focus,
     hkFocus: CONFIG.hkFocus || [],
   };

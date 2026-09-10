@@ -103,6 +103,27 @@ export function buildMarkdown(snap) {
   L.push("## 催化剂");
   L.push("");
 
+  const mac = snap.macro;
+  if (mac?.ok && mac.items?.length) {
+    const pick = (k) => mac.items.find((x) => x.key === k);
+    L.push("### 隔夜外盘（环境描述，不是涨跌预测）");
+    L.push("");
+    for (const k of ["NDX", "SPX", "DJIA", "HSTECH", "HSI", "VIX", "UDI", "USDCNH", "GOLD"]) {
+      const x = pick(k);
+      if (!x) continue;
+      L.push(
+        `- ${x.label} ${x.price ?? "-"}` + (x.chgPct != null ? `（${sign(x.chgPct)}%）` : "")
+      );
+    }
+    L.push("");
+    if (mac.background) {
+      L.push(`**背景判断：${mac.background.tone}**`);
+      L.push("");
+      for (const s of mac.background.signals) L.push(`- ${s.text}`);
+      L.push("");
+    }
+  }
+
   const lic = catalysts.license;
   if (lic?.ok && lic.months?.length) {
     const latest = lic.months[0];
@@ -331,6 +352,21 @@ export function buildPushText(snap) {
     `**低位区（${cheap.length}）**　` +
       (cheap.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无")
   );
+
+  const mac = snap.macro;
+  if (mac?.ok && mac.background) {
+    const pick = (k) => mac.items.find((x) => x.key === k);
+    const bits = [];
+    for (const k of ["NDX", "HSTECH", "VIX"]) {
+      const x = pick(k);
+      if (x) bits.push(`${x.label} ${x.chgPct != null ? `${sign(x.chgPct)}%` : x.price}`);
+    }
+    if (bits.length) {
+      L.push("");
+      L.push(`**隔夜外盘**　${bits.join("　")}`);
+      L.push(`环境：${mac.background.tone}`);
+    }
+  }
   L.push(
     `**高位区（${rich.length}）**　` +
       (rich.map((s) => `${s.name} ${s.valuation.compositePct}%`).join("、") || "无")

@@ -99,6 +99,15 @@
   .prod-note{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
   .prod-meta{font-size:11px;color:var(--dim);margin-top:3px}
   .empty-hint{font-size:12px;color:var(--dim);line-height:1.7;background:#0f172a;border-radius:8px;padding:10px}
+  .macro-grid{display:flex;flex-wrap:wrap;margin:10px 0 0}
+  .macro-item{width:50%;margin-bottom:10px;font-size:13px}
+  .macro-item .n{color:var(--muted);font-size:11px;display:block}
+  .macro-item .v{font-size:15px}
+  .macro-verdict{border-radius:10px;padding:12px;margin-top:8px;font-size:13px;line-height:1.7}
+  .macro-verdict.warn{background:rgba(251,191,36,.08);border-left:4px solid var(--warn)}
+  .macro-verdict.good{background:rgba(34,197,94,.08);border-left:4px solid var(--down)}
+  .macro-verdict.flat{background:#0f172a;border-left:4px solid var(--dim)}
+  .macro-verdict .item{color:var(--muted);border:none;padding:2px 0;cursor:default}
   .foot{text-align:center;font-size:11px;color:var(--dim);line-height:1.7;margin-top:20px}
   .empty{color:var(--muted);font-size:13px}
   .locklink{color:var(--dim);text-decoration:underline;cursor:pointer}
@@ -150,7 +159,18 @@
   try {
     payload = JSON.parse(document.getElementById("payload").textContent);
   } catch (e) {
-    document.body.innerHTML = '<div class="card">页面数据损坏，请等下次自动生成。</div>';
+    document.body.innerHTML =
+      '<div class="card" style="text-align:center;padding:36px 20px">'
+      + '<div style="font-size:17px;font-weight:600;margin-bottom:10px">页面没加载完整</div>'
+      + '<div class="muted small" style="margin-bottom:20px;line-height:1.8">'
+      + '数据在传输中被截断了。<br>重新加载一次通常就好。</div>'
+      + '<button id="retry" style="width:100%;max-width:260px;padding:12px;border-radius:12px;'
+      + 'border:none;background:#38bdf8;color:#0f172a;font-size:15px;font-weight:600">重新加载</button>'
+      + '<div class="dim tiny" style="margin-top:20px;line-height:1.8">'
+      + '如果反复出现，点右上角 ⋯ → 用系统浏览器打开。<br>微信内置浏览器对长页面不太稳。</div>'
+      + '</div>';
+    var rb = document.getElementById("retry");
+    if (rb) rb.addEventListener("click", function(){ location.reload(); });
     return;
   }
 
@@ -518,6 +538,42 @@
     return h.join("");
   }
 
+  function macroHtml(){
+    var m = snap.macro;
+    if (!m || !m.ok || !m.items || !m.items.length) return '';
+    var h = ['<div class="card"><h2>隔夜外盘与风险背景</h2>'];
+    h.push('<div class="macro-grid">');
+    for (var i=0;i<m.items.length;i++){
+      var x = m.items[i];
+      h.push('<div class="macro-item"><span class="n">'+esc(x.label)+'</span>'
+        + '<span class="v '+tone(x.chgPct)+'">'+fmtIdx(x.price)
+        + (x.chgPct!=null ? ' <span class="small">'+sg(x.chgPct)+'%</span>' : '')
+        + '</span></div>');
+    }
+    h.push('</div>');
+
+    var bg = m.background || {};
+    h.push('<div class="macro-verdict '+(bg.toneLevel||'flat')+'">');
+    h.push('<b>背景判断：'+esc(bg.tone||'-')+'</b>');
+    for (var j=0;j<(bg.signals||[]).length;j++){
+      var s = bg.signals[j];
+      h.push('<div class="item">· '+esc(s.text)+'</div>');
+    }
+    h.push('</div>');
+    h.push('<div class="tiny dim" style="margin-top:12px;line-height:1.8">'
+      + '这是<strong>环境描述</strong>，不是涨跌预测。规则写死在 src/macro.mjs 里，'
+      + '你可以看、可以改、可以事后核对对错。日频涨跌接近随机，任何预测都不足以支撑交易决策。'
+      + '</div>');
+    h.push('</div>');
+    return h.join("");
+  }
+
+  function fmtIdx(v){
+    if (v == null || isNaN(v)) return '-';
+    if (Math.abs(v) >= 100) return Number(v).toLocaleString('zh-CN',{maximumFractionDigits:2});
+    return Number(v).toFixed(4).replace(/0+$/,'').replace(/\.$/,'');
+  }
+
   function render(){
     var s = snap.sector, idx = s.index;
     var hk = (snap.hkStocks||[]).map(decorate);
@@ -550,6 +606,7 @@
     }
     h.push('</div>');
 
+    h.push(macroHtml());
     h.push(catalystHtml());
 
     var stocks = all;
