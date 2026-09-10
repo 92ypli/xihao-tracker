@@ -2,6 +2,11 @@
 work/
 data/cache/
 
+# 明文数据与日报不进版本库（仓库是公开的，只提交加密产物）
+data/latest.json
+data/history.jsonl
+reports/
+
 # 云函数的 lib 是 scripts/sync-lib.mjs 生成的，不进版本库
 cloudfunctions/api/lib/
 

@@ -1,26 +1,31 @@
 /**
  * 每日任务入口（GitHub Actions 用）。
  *
- *   node scripts/run-daily.mjs
+ *   PAGE_PASSWORD=xxx node scripts/run-daily.mjs
  *
  * 做四件事：
  *   1. 抓数据并算分位 / 区间
- *   2. 落地 data/latest.json、追加 data/history.jsonl、写 reports/YYYY-MM-DD.md
- *   3. 用 web/index.html 模板生成 docs/index.html（GitHub Pages 发布目录）
+ *   2. 追加当天的加密归档（data/history.enc）
+ *   3. 生成 docs/index.html —— 数据默认是加密的，没密码打不开
  *   4. 有 webhook 就推送
+ *
+ * 不设 PAGE_PASSWORD 时会写成明文，方便本地调试。
  */
 import { mkdirSync, writeFileSync, appendFileSync, readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { buildSnapshot } from "../src/pipeline.mjs";
 import { buildMarkdown, buildPushText, renderConsoleTable } from "../src/report.mjs";
+import { buildPayload, encryptText } from "../src/crypto.mjs";
 import { CONFIG } from "../src/config.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const p = (...s) => path.join(root, ...s);
 const ensure = (dir) => mkdirSync(dir, { recursive: true });
-
 const log = (...a) => console.log("[daily]", ...a);
+
+const PASSWORD = process.env.PAGE_PASSWORD || "";
+const encrypted = !!PASSWORD;
 
 async function push({ title, text }) {
   const jobs = [];
@@ -40,7 +45,10 @@ async function push({ title, text }) {
       fetch(process.env.WECOM_WEBHOOK, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ msgtype: "markdown", markdown: { content: `**${title}**\n${text}` } }),
+        body: JSON.stringify({
+          msgtype: "markdown",
+          markdown: { content: `**${title}**\n${text}` },
+        }),
       }).then((r) => `企业微信 ${r.status}`)
     );
   }
@@ -67,53 +75,107 @@ async function push({ title, text }) {
   }
 }
 
-function buildSite(snap) {
+async function buildSite(snap) {
   const tplPath = p("web", "index.html");
   if (!existsSync(tplPath)) {
     log("没有找到 web/index.html，跳过生成页面。");
     return;
   }
+
+  // CI 环境下没设密码就只生成占位页，绝不把明文推上去
+  if (!PASSWORD && process.env.CI) {
+    ensure(p("docs"));
+    writeFileSync(p("docs", "index.html"), PLACEHOLDER_HTML, "utf8");
+    log("⚠ CI 里没有设置 PAGE_PASSWORD，已生成占位页（不会泄露数据）");
+    return;
+  }
+
   const tpl = readFileSync(tplPath, "utf8");
-  const html = tpl.replace("__DATA__", JSON.stringify(snap).replace(/</g, "\\u003c"));
+  const payload = await buildPayload(snap, PASSWORD);
+  const html = tpl.replace(
+    "__PAYLOAD__",
+    JSON.stringify(payload).replace(/</g, "\\u003c")
+  );
   ensure(p("docs"));
   writeFileSync(p("docs", "index.html"), html, "utf8");
-  log(`已生成 docs/index.html（${(html.length / 1024).toFixed(0)} KB）`);
+  log(
+    `已生成 docs/index.html（${(html.length / 1024).toFixed(0)} KB，` +
+      `${encrypted ? "已加密" : "⚠ 明文"}）`
+  );
 }
 
-function writeHistory(snap) {
+const PLACEHOLDER_HTML = `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>喜好跟踪</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+background:#0f172a;color:#e2e8f0;font:15px/1.8 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:24px}
+div{max-width:420px}
+h1{font-size:18px;margin:0 0 12px}
+p{color:#94a3b8;margin:0 0 12px}
+code{background:#1e293b;padding:2px 6px;border-radius:5px;color:#38bdf8}
+</style></head><body><div>
+<h1>还没有配置密码</h1>
+<p>这一步是故意的：在设置密码之前，页面不会发布任何数据。</p>
+<p>到仓库的 <code>Settings → Secrets and variables → Actions</code> 添加一个
+<code>PAGE_PASSWORD</code>，然后跑一次 <code>每日任务</code>，页面就会用这个密码加密生成。</p>
+<p>密码忘了不影响任何东西，换一个再跑一次就行。</p>
+</div></body></html>`;
+
+/** 当天记录：加密后追加，用于以后回测 */
+async function writeHistory(snap) {
   ensure(p("data"));
   const row = {
     date: snap.tradeDate,
     generatedAt: snap.generatedAt,
     index: snap.sector.index.price,
-    stocks: snap.stocks
-      .filter((s) => !s.error)
-      .map((s) => ({
-        code: s.code,
-        name: s.name,
-        price: s.price,
-        pct: s.valuation?.compositePct ?? null,
-        addPrice: s.bands?.addPrice ?? null,
-        trimPrice: s.bands?.trimPrice ?? null,
-        status: s.status?.label ?? null,
-      })),
+    stocks: [
+      ...snap.stocks.filter((s) => !s.error).map((s) => ({ m: "A", ...pickRow(s) })),
+      ...(snap.hkStocks || []).filter((s) => !s.error).map((s) => ({ m: "HK", ...pickRow(s) })),
+    ],
   };
-  appendFileSync(p("data", "history.jsonl"), JSON.stringify(row) + "\n", "utf8");
-  log(`已追加 data/history.jsonl（${row.stocks.length} 条）`);
+  const line = JSON.stringify(row);
+
+  if (encrypted) {
+    appendFileSync(p("data", "history.enc"), (await encryptText(line, PASSWORD)) + "\n", "utf8");
+    log(`已追加 data/history.enc（${row.stocks.length} 条，加密）`);
+  } else {
+    appendFileSync(p("data", "history.jsonl"), line + "\n", "utf8");
+    log(`已追加 data/history.jsonl（${row.stocks.length} 条，明文）`);
+  }
+}
+
+function pickRow(s) {
+  return {
+    code: s.code,
+    name: s.name,
+    price: s.price,
+    pct: s.valuation?.compositePct ?? null,
+    addPrice: s.bands?.addPrice ?? null,
+    trimPrice: s.bands?.trimPrice ?? null,
+    status: s.status?.label ?? null,
+  };
 }
 
 async function main() {
+  if (!encrypted) {
+    log("⚠ 没有设置 PAGE_PASSWORD，本次会生成明文页面。本地调试可以，正式跑请务必设置。");
+  }
+
   const snap = await buildSnapshot();
 
+  // 本地明文快照，不进版本库（.gitignore 已排除）
   ensure(p("data"));
   writeFileSync(p("data", "latest.json"), JSON.stringify(snap, null, 2), "utf8");
-  writeHistory(snap);
+  await writeHistory(snap);
 
+  // 日报：本地归档用，同样不进版本库
   ensure(p("reports"));
   writeFileSync(p("reports", `${snap.tradeDate}.md`), buildMarkdown(snap), "utf8");
-  log(`已写入 reports/${snap.tradeDate}.md`);
 
-  buildSite(snap);
+  await buildSite(snap);
 
   console.log("\n-- A股 --");
   console.log(renderConsoleTable(snap.stocks, "A"));
@@ -133,8 +195,8 @@ async function main() {
   }
   if (c.pipeline?.length) {
     console.log(`-- 产品管线 -- ${c.pipeline.length} 条`);
-    for (const p of c.pipeline.slice(0, 8)) {
-      console.log(`   ${p.soon ? "临近 " : "     "}${p.product}　${p.companyName || ""}　${p.stage || ""}　${p.expectedDate || ""}`);
+    for (const x of c.pipeline.slice(0, 8)) {
+      console.log(`   ${x.soon ? "临近 " : "     "}${x.product}　${x.companyName || ""}　${x.stage || ""}　${x.expectedDate || ""}`);
     }
   }
   if (c.highlights?.length) {
@@ -147,7 +209,7 @@ async function main() {
   await push(buildPushText(snap));
 
   const failed = snap.stocks.filter((s) => s.error);
-  log(`完成：${snap.stocks.length - failed.length}/${snap.stocks.length} 只成功，交易日 ${snap.tradeDate}`);
+  log(`完成：A股 ${snap.stocks.length - failed.length}/${snap.stocks.length}，港股 ${snap.hkStocks?.length ?? 0}，交易日 ${snap.tradeDate}`);
   if (failed.length === snap.stocks.length) {
     console.error("全部标的抓取失败，判定为数据源不可用。");
     process.exit(1);

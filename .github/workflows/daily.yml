@@ -26,6 +26,7 @@ jobs:
       - name: 抓取并生成
         run: node scripts/run-daily.mjs
         env:
+          PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
           DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
           WECOM_WEBHOOK: ${{ secrets.WECOM_WEBHOOK }}
           SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}

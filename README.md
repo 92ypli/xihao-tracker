@@ -41,14 +41,16 @@ xihao-tracker/
 ├── scripts/
 │   ├── probe.mjs            数据源连通性自检
 │   ├── run-daily.mjs        每日任务入口
+│   ├── decrypt.mjs          读取加密归档
 │   └── sync-lib.mjs         src/ → 云函数（只有跑小程序时才需要）
+├── src/crypto.mjs           加密（PBKDF2 + AES-GCM）
 ├── web/index.html           页面模板（单文件，无外部依赖）
-├── docs/index.html          生成物，GitHub Pages 就是发布它
+├── docs/index.html          生成物，GitHub Pages 发布它（内容已加密）
 ├── config/pipeline.json      ★ 产品管线（人工维护）
 ├── data/
-│   ├── latest.json          最新快照
-│   └── history.jsonl        每日区间记录
-├── reports/                 每日 Markdown 日报
+│   └── history.enc          每日区间记录（加密，进版本库）
+├── data/latest.json         最新快照（明文，不进版本库）
+├── reports/                 每日 Markdown 日报（明文，不进版本库）
 ├── miniprogram/             小程序前端（可选，见文末）
 └── cloudfunctions/api/      小程序云函数（可选）
 ```
@@ -124,6 +126,7 @@ https://你的用户名.github.io/xihao-tracker/
 
 | Secret 名 | 说明 |
 |---|---|
+| `PAGE_PASSWORD` | **页面的解密密码**，见下一节 |
 | `DINGTALK_WEBHOOK` | 钉钉机器人完整 Webhook 地址 |
 | `WECOM_WEBHOOK` | 企业微信机器人完整 Webhook 地址 |
 | `SERVERCHAN_KEY` | Server酱的 SendKey |
@@ -131,6 +134,40 @@ https://你的用户名.github.io/xihao-tracker/
 配几个都行，会同时发。一个都不配也能跑，只是不推送。
 
 钉钉机器人有安全设置，如果选了「自定义关键词」，把关键词设成 `喜好跟踪`，不然消息会被拒。
+
+### 第 5.5 步：设置页面密码（强烈建议）
+
+`PAGE_PASSWORD` 不设的话，页面会是「还没有配置密码」的占位页，什么数据都不显示。这是故意的——代码里写死了：CI 环境下没密码就不发布真实数据。
+
+设好之后跑一次每日任务，页面就会用这个密码加密生成。打开时要求输入密码，输对了才解密渲染。
+
+**加密是怎么做的：**
+
+```
+密码 --PBKDF2-SHA256(25 万次迭代)--> 密钥 --AES-256-GCM--> 密文
+```
+
+页面里只有 base64 密文和盐、初始向量，没有任何明文。拿不到密码，就算把 HTML 下载下来也只是一堆乱码。
+
+**关于密码的几件事：**
+
+- 密码只存在 GitHub Secrets 和你手机的浏览器里，**不上传、不写进代码**
+- 手机上输一次会记住，之后自动进入；页脚有「锁定本设备」可以清掉
+- **忘了不影响任何东西**，换一个密码、重跑一次任务就行，历史数据不受影响
+- 别用 `123456` 这种，加密强度取决于密码强度
+
+### 第 5.6 步：仓库里不放明文
+
+因为仓库是公开的，`data/latest.json`、`data/history.jsonl`、`reports/` 都已经加进 `.gitignore`，**不再提交**。
+
+仓库里只会留下一样数据产物：`docs/index.html`，而它是加密的。
+
+日期归档走 `data/history.enc`——每天一行加密记录，用于以后回测。想看的时候：
+
+```bash
+PAGE_PASSWORD=你的密码 node scripts/decrypt.mjs           # 看总览
+PAGE_PASSWORD=你的密码 node scripts/decrypt.mjs 002555    # 看单只的区间变化
+```
 
 ### 第 6 步：先手动跑一次
 
@@ -277,11 +314,16 @@ PE、PB、PS 三个口径各算一遍再加权（PB 权重最高，因为这类�
 
 ```bash
 npm run probe    # 数据源自检
-npm run daily    # 抓取 + 生成 docs/ + reports/ + data/
+npm run daily    # 抓取 + 生成 docs/ + reports/ + data/（不设密码就是明文，方便调试）
 npm run preview  # 只看终端表格
+
+# 带密码跑（和线上一致）
+PAGE_PASSWORD=你的密码 npm run daily
 ```
 
 项目零依赖，不用 `npm install`。改完 `src/` 之后用 `npm run daily` 在本地验证，比等 GitHub 跑一次快得多。
+
+**本地不设 `PAGE_PASSWORD` 会生成明文页面**——这是刻意的，方便调试。但只有 CI 环境（`CI=true`）下才会写占位页，所以本地调试不会误发布明文。
 
 ---
 
