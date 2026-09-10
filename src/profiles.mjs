@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { fetchTapTapMany, parseTapTapId, searchTapTapId } from "./taptap.mjs";
+import { fetchTapTapMany, parseTapTapId, searchTapTapCandidates } from "./taptap.mjs";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(moduleDir, "..");
@@ -19,6 +19,32 @@ function profilesPath() {
 
 function cachePath() {
   return path.join(ROOT, "data", "taptap-cache.json");
+}
+
+function trendPath() {
+  return path.join(ROOT, "data", "taptap-trend.json");
+}
+
+/** 趋势文件：每个产品保留最近 30 次记录，用来算「比上次」的变化 */
+const TREND_KEEP = 30;
+
+function loadTrend() {
+  const p = trendPath();
+  if (!existsSync(p)) return {};
+  try {
+    return JSON.parse(readFileSync(p, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveTrend(trend) {
+  try {
+    mkdirSync(path.dirname(trendPath()), { recursive: true });
+    writeFileSync(trendPath(), JSON.stringify(trend, null, 2) + "\n", "utf8");
+  } catch {
+    /* 写趋势失败不影响主流程 */
+  }
 }
 
 export function loadProfiles() {
@@ -119,6 +145,18 @@ function publisherMatches(tap, keywords) {
   return keywords.some((k) => text.includes(k));
 }
 
+const normTitle = (s) => String(s || "").replace(/[\s（）()【】\-—:：·《》]/g, "").toLowerCase();
+
+/** 产品名是否和 TapTap 标题对得上 */
+function titleMatches(name, tapTitle) {
+  const a = normTitle(name);
+  const b = normTitle(tapTitle);
+  if (!a || !b) return false;
+  if (a.includes(b) || b.includes(a)) return true;
+  // 「仙境传说RO2」vs「仙境传说RO：守护永恒的爱2」这类靠前缀兜底
+  return a.length >= 3 && b.slice(0, 4) === a.slice(0, 4);
+}
+
 /**
  * 读取产品档案，并给每个产品补上 TapTap 数据。
  *
@@ -136,7 +174,8 @@ export async function buildProfiles({ allowSearch = true, searchBudget = 40 } = 
 
   // 第一轮：确定每个产品的 id
   const idByName = new Map();
-  for (const c of Object.values(companies)) {
+  for (const [code, c] of Object.entries(companies)) {
+    const kws = companyKeywords(c, code);
     for (const p of c.products || []) {
       const explicit = parseTapTapId(p.taptap);
       if (explicit) {
@@ -148,21 +187,27 @@ export async function buildProfiles({ allowSearch = true, searchBudget = 40 } = 
         continue;
       }
       if (cache.misses[p.name] && !missExpired(cache.misses[p.name])) continue;
-      needed.push(p.name);
+      needed.push({ name: p.name, kws });
     }
   }
 
   // 第二轮：缓存里没有的，做一次搜索（有预算上限，避免首次跑太久）
   if (allowSearch) {
-    for (const name of needed) {
+    for (const item of needed) {
       if (searched >= searchBudget) break;
+      const { name, kws } = item;
       searched++;
       try {
-        const hit = await searchTapTapId(name);
-        if (hit) {
-          cache.hits[name] = hit.id;
+        const list = await searchTapTapCandidates(name, 6);
+        // 先用名字筛掉噪音（搜 FGO 会返回《战舰少女》，搜问道会返回《哈利波特》），
+        // 再优先选厂商对得上的那个；厂商对不上也保留，但后面会打 ⚠ 让人复核。
+        const titled = (list || []).filter((x) => titleMatches(name, x.title));
+        const chosen = titled.find((x) => publisherMatches(x, kws) === true) || titled[0] || null;
+
+        if (chosen) {
+          cache.hits[name] = chosen.id;
           delete cache.misses[name];
-          idByName.set(name, hit.id);
+          idByName.set(name, chosen.id);
         } else {
           cache.misses[name] = today();
         }
@@ -180,6 +225,8 @@ export async function buildProfiles({ allowSearch = true, searchBudget = 40 } = 
 
   const mismatched = [];
   const out = {};
+  const trend = loadTrend();
+  const todayStr = today();
 
   for (const [code, c] of Object.entries(companies)) {
     const kws = companyKeywords(c, code);
@@ -197,11 +244,42 @@ export async function buildProfiles({ allowSearch = true, searchBudget = 40 } = 
         if (!ok) mismatched.push({ code, company: c.name, product: p.name, publisher: tap.publisher || tap.developer || "-" });
       }
 
+      // 记录当天快照并算变化（预约、关注、评分、评价数）
+      let tr = null;
+      if (tap) {
+        const series = trend[p.name] || [];
+        const row = {
+          d: todayStr,
+          r: tap.reserveCount ?? null,
+          f: tap.fansCount ?? null,
+          s: tap.score ?? null,
+          c: tap.reviewCount ?? null,
+        };
+        const last = series[series.length - 1];
+        if (last && last.d === todayStr) series[series.length - 1] = row;
+        else series.push(row);
+        const trimmed = series.slice(-TREND_KEEP);
+        trend[p.name] = trimmed;
+
+        const prev = trimmed.length >= 2 ? trimmed[trimmed.length - 2] : null;
+        const delta = (k) =>
+          prev && row[k] != null && prev[k] != null ? Math.round((row[k] - prev[k]) * 10) / 10 : null;
+        tr = {
+          points: trimmed.length,
+          since: prev?.d || null,
+          reserveDelta: delta("r"),
+          fansDelta: delta("f"),
+          scoreDelta: delta("s"),
+          reviewDelta: delta("c"),
+        };
+      }
+
       return {
         ...p,
         status: statusFromTap(tap, p.status),
         taptapId: id,
         tap,
+        trend: tr,
         verify,
         tapError: t && t.error ? t.error : null,
         daysAway: d,
@@ -221,6 +299,8 @@ export async function buildProfiles({ allowSearch = true, searchBudget = 40 } = 
 
     out[code] = { name: c.name || "", aliases: c.aliases || [], note: c.note || "", products };
   }
+
+  saveTrend(trend);
 
   return { companies: out, taptapFetched: ids.length, searched, mismatched };
 }

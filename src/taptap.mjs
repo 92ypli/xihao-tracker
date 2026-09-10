@@ -89,14 +89,30 @@ export async function fetchTapTap(id) {
  * 所以借 Bing 的站内搜索：site:taptap.cn <名字>，从结果 URL 里抠出 /app/<id>。
  */
 export async function searchTapTapId(name) {
-  // 查询式换几种，Bing 对 site: 后接路径的写法时好时坏
-  const queries = [`site:taptap.cn ${name}`, `site:taptap.cn/app ${name}`, `taptap ${name} 评分`];
+  const list = await searchTapTapCandidates(name);
+  return list.length ? list[0] : null;
+}
+
+/**
+ * 返回若干候选（每个都带 TapTap 详情），交给调用方按「厂商」字段挑选。
+ *
+ * 为什么不在这里按名字筛：只靠名字太容易错——搜 FGO 会返回《战舰少女》，
+ * 搜「问道」会返回《哈利波特：魔法觉醒》。名字像不像不等于归属对。
+ */
+export async function searchTapTapCandidates(name, max = 6) {
+  // 百度优先（中文内容命中率高），Bing 兜底。
+  // 注意 Bing 对高频请求会静默限流——返回 200 但结果里没有链接，所以不能只靠它。
+  const engines = [
+    (n) => `https://www.baidu.com/s?wd=${encodeURIComponent(n + " taptap 评分")}`,
+    (n) => `https://cn.bing.com/search?q=${encodeURIComponent("site:taptap.cn " + n)}`,
+    (n) => `https://cn.bing.com/search?q=${encodeURIComponent("taptap " + n + " 评分")}`,
+  ];
   const seen = new Set();
   const ids = [];
-  for (const q of queries) {
-    if (ids.length >= 6) break;
+  for (const build of engines) {
+    if (ids.length >= max) break;
     try {
-      const res = await fetch(`https://cn.bing.com/search?q=${encodeURIComponent(q)}`, {
+      const res = await fetch(build(name), {
         headers: HEADERS,
         signal: AbortSignal.timeout(25000),
       });
@@ -116,21 +132,15 @@ export async function searchTapTapId(name) {
   }
   if (!ids.length) return null;
 
-  // 逐个核对标题，避免抓到不相关的页面
-  const norm = (s) => String(s || "").replace(/[\s（）()【】\-—:：]/g, "").toLowerCase();
-  const target = norm(name);
-  for (const id of ids.slice(0, 4)) {
+  const out = [];
+  for (const id of ids.slice(0, max)) {
     try {
-      const d = await fetchTapTap(id);
-      const t = norm(d.title);
-      if (t.includes(target) || target.includes(t) || (target.length >= 3 && t.slice(0, 4) === target.slice(0, 4))) {
-        return d;
-      }
+      out.push(await fetchTapTap(id));
     } catch {
-      /* 换下一个 */
+      /* 取不到的跳过 */
     }
   }
-  return null;
+  return out;
 }
 
 /** 批量取，限量并发 */

@@ -44,6 +44,13 @@ const peOf = (s) => {
   return v == null || !Number.isFinite(v) ? "-" : Number(v).toFixed(1);
 };
 const cap = (v) => (v ? `${(v / 1e8).toFixed(0)}亿` : "-");
+const big = (v) => {
+  if (v == null || !Number.isFinite(v)) return "-";
+  const a = Math.abs(v);
+  if (a >= 1e8) return `${(v / 1e8).toFixed(1)}亿`;
+  if (a >= 1e4) return `${(v / 1e4).toFixed(1)}万`;
+  return String(Math.round(v));
+};
 const statusOf = (s) => (s.status && s.status.label) || "-";
 
 const METHOD_LABEL = { valuation: "估值分位", price: "价格分位" };
@@ -238,6 +245,17 @@ export function buildMarkdown(snap) {
           const house = p.tap.publisher || p.tap.developer;
           if (house) bits.push(`厂商 ${house}`);
           if (p.verify === "mismatch") bits.push("⚠ 厂商名对不上，归属待复核");
+          if (p.tap.reserveCount) bits.push(`预约 ${big(p.tap.reserveCount)}`);
+          if (p.tap.fansCount) bits.push(`关注 ${big(p.tap.fansCount)}`);
+        }
+        if (p.trend?.since) {
+          const d = [];
+          const sb = (v) => `${v > 0 ? "+" : "-"}${big(Math.abs(v))}`;
+          if (p.trend.reserveDelta) d.push(`预约 ${sb(p.trend.reserveDelta)}`);
+          if (p.trend.fansDelta) d.push(`关注 ${sb(p.trend.fansDelta)}`);
+          if (p.trend.scoreDelta) d.push(`评分 ${p.trend.scoreDelta > 0 ? "+" : ""}${p.trend.scoreDelta}`);
+          if (p.trend.reviewDelta) d.push(`评价 ${p.trend.reviewDelta > 0 ? "+" : ""}${p.trend.reviewDelta}`);
+          if (d.length) bits.push(`较 ${p.trend.since}：${d.join("、")}`);
         }
         if (p.launchDate) bits.push(`上线 ${p.launchDate}${p.monthsLive != null ? `（${p.monthsLive} 个月）` : ""}`);
         if (p.expectedDate)

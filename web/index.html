@@ -236,6 +236,12 @@
   function fp(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(1)+"%"; }
   function sg(v){ return (v==null||isNaN(v)) ? "-" : (v>0?"+":"")+Number(v).toFixed(2); }
   function cap(v){ return v ? (v/1e8).toFixed(0)+"亿" : "-"; }
+  function big(v){
+    if (v == null || isNaN(v)) return "-";
+    if (Math.abs(v) >= 1e8) return (v/1e8).toFixed(1)+"亿";
+    if (Math.abs(v) >= 1e4) return (v/1e4).toFixed(1)+"万";
+    return String(Math.round(v));
+  }
   function tone(v){ return v>0?"up":v<0?"down":""; }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
@@ -392,6 +398,8 @@
         if (t.goodRate != null) meta.push('好评率 '+t.goodRate+'%');
         if (t.reviewCount) meta.push(t.reviewCount+' 条评价');
         if (t.labels && t.labels.length) meta.push('状态：'+t.labels.join('/'));
+        if (t.reserveCount) meta.push('预约 <b>'+big(t.reserveCount)+'</b>');
+        if (t.fansCount) meta.push('关注 '+big(t.fansCount));
         var house = t.publisher || t.developer;
         if (house) meta.push('TapTap 厂商：'+house);
       } else if (p.tapError) {
@@ -400,6 +408,16 @@
         meta.push('TapTap id 无效');
       }
       if (p.launchDate) meta.push('上线 '+p.launchDate+(p.monthsLive!=null?'（'+p.monthsLive+' 个月）':''));
+      var tr = p.trend;
+      if (tr && tr.since) {
+        var d = [];
+        var signedBig = function(v){ return (v>0?'+':'-') + big(Math.abs(v)); };
+        if (tr.reserveDelta) d.push('预约 '+signedBig(tr.reserveDelta));
+        if (tr.fansDelta) d.push('关注 '+signedBig(tr.fansDelta));
+        if (tr.scoreDelta) d.push('评分 '+sg(tr.scoreDelta));
+        if (tr.reviewDelta) d.push('评价 '+sg(tr.reviewDelta));
+        if (d.length) meta.push('较 '+tr.since+'：'+d.join('、'));
+      }
       if (p.expectedDate) {
         meta.push('预期 '+p.expectedDate+(p.daysAway!=null?'（'+(p.daysAway>=0?p.daysAway+' 天后':'已过 '+(-p.daysAway)+' 天')+'）':''));
       } else if (p.upcoming) {

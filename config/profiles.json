@@ -139,7 +139,7 @@
       { "name": "TapTap", "type": "平台", "status": "运营中", "taptap": "", "note": "国内最大的手游社区与分发平台，其评分是行业里公信力最高的公开口碑来源" },
       { "name": "心动小镇", "type": "自研", "status": "运营中", "taptap": "", "note": "模拟经营，公司近年自研主力" },
       { "name": "火炬之光：无限", "type": "发行", "status": "运营中", "taptap": "", "note": "赛季制刷宝 ARPG" },
-      { "name": "仙境传说 RO2", "type": "自研", "status": "测试中", "taptap": "", "note": "在测，IP 有基础但前代口碑形成拖累" },
+      { "name": "仙境传说 RO2", "type": "自研", "status": "测试中", "taptap": "737471", "note": "TapTap 上的全名是《仙境传说RO：守护永恒的爱2》。MMORPG，心动自研，厂商字段已核对为心动" },
       { "name": "不休的乌拉拉", "type": "发行", "status": "运营中", "taptap": "142793" }
     ] },
 
