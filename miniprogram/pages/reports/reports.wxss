@@ -1,0 +1,48 @@
+.mt { margin-top: 14rpx; }
+.small { font-size: 24rpx; }
+
+.cat {
+  display: flex;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #334155;
+}
+
+.cat:last-of-type { border-bottom: none; }
+
+.cat-left {
+  width: 150rpx;
+  flex-shrink: 0;
+}
+
+.cat-day {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.cat-right { flex: 1; }
+.cat-title { display: block; font-size: 28rpx; line-height: 1.5; }
+
+.doc {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #334155;
+}
+
+.doc:last-of-type { border-bottom: none; }
+.doc-date { font-size: 22rpx; color: #94a3b8; }
+.org { font-size: 22rpx; color: #38bdf8; }
+.doc-title { display: block; font-size: 27rpx; line-height: 1.5; margin-top: 6rpx; }
+
+.sub {
+  font-size: 24rpx;
+  margin: 16rpx 0 4rpx;
+}
+
+.disclaimer {
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.6;
+}

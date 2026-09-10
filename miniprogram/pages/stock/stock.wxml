@@ -1,0 +1,114 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="card center muted">加载中…</view>
+  <view wx:elif="{{error}}" class="card center down">{{error}}</view>
+  <block wx:else>
+    <view class="card">
+      <view class="row between">
+        <view class="row">
+          <text class="name">{{stock.name}}</text>
+          <text class="code muted">{{stock.code}}</text>
+        </view>
+        <text class="badge {{stock.statusTone}}">{{stock.statusLabel}}</text>
+      </view>
+      <view class="row baseline gap">
+        <text class="big {{stock.chgClass}}">{{stock.priceText}}</text>
+        <text class="{{stock.chgClass}}">{{stock.chgText}}%</text>
+      </view>
+      <view class="metrics">
+        <view class="metric"><text class="k">PE(TTM)</text><text class="v">{{stock.peText}}</text></view>
+        <view class="metric"><text class="k">PB</text><text class="v">{{stock.pbText}}</text></view>
+        <view class="metric"><text class="k">总市值</text><text class="v">{{stock.capText}}</text></view>
+        <view class="metric"><text class="k">换手率</text><text class="v">{{stock.turnoverText}}</text></view>
+      </view>
+    </view>
+    <view class="card" wx:if="{{stock.hasBands}}">
+      <view class="section-title">价格区间</view>
+      <view class="bands">
+        <view class="band buy">
+          <text class="band-k">加仓价</text>
+          <text class="band-v">{{stock.addText}}</text>
+          <text class="band-sub">低于此价进入加仓区</text>
+          <text class="band-sub">区间 {{stock.addZoneText}}</text>
+        </view>
+        <view class="band trim">
+          <text class="band-k">减仓价</text>
+          <text class="band-v">{{stock.trimText}}</text>
+          <text class="band-sub">高于此价进入减仓区</text>
+          <text class="band-sub">区间 {{stock.trimZoneText}}</text>
+        </view>
+      </view>
+      <view class="dist">
+        <text>距加仓价 <text class="{{stock.bands.toAddPricePct < 0 ? 'down' : 'up'}}">{{stock.toAddText}}%</text></text>
+        <text>距减仓价 <text class="{{stock.bands.toTrimPricePct < 0 ? 'up' : 'down'}}">{{stock.toTrimText}}%</text></text>
+      </view>
+    </view>
+    <view class="card" wx:if="{{stock.valuation.ok}}">
+      <view class="section-title">估值分位 {{stock.pctText}}</view>
+      <view class="bar">
+        <view class="zone buy"></view>
+        <view class="zone hold"></view>
+        <view class="zone trim"></view>
+        <view class="cursor" style="{{barStyle}}"></view>
+      </view>
+      <view class="bar-legend muted">
+        <text>加仓区</text><text>持有区</text><text>减仓区</text>
+      </view>
+      <view class="metrics">
+        <view class="metric"><text class="k">PE 分位</text><text class="v">{{stock.pePctText}}</text></view>
+        <view class="metric"><text class="k">PB 分位</text><text class="v">{{stock.pbPctText}}</text></view>
+        <view class="metric"><text class="k">PS 分位</text><text class="v">{{stock.psPctText}}</text></view>
+      </view>
+    </view>
+    <view class="card" wx:else>
+      <view class="section-title">估值分位</view>
+      <view class="muted">{{stock.valuation.reason || '数据不足，无法给出区间'}}</view>
+    </view>
+    <view class="card" wx:if="{{stock.consensus}}">
+      <view class="section-title">机构一致预期</view>
+      <view class="muted">{{stock.consensusText}}</view>
+      <view class="metrics">
+        <view class="metric"><text class="k">今年预测 PE</text><text class="v">{{stock.consensus.peOnThisYear || '-'}}</text></view>
+        <view class="metric"><text class="k">明年预测 PE</text><text class="v">{{stock.consensus.peOnNextYear || '-'}}</text></view>
+        <view class="metric"><text class="k">预测趋势</text><text class="v">{{stock.revTrendText}}</text></view>
+      </view>
+    </view>
+    <view class="card" wx:if="{{stock.priceContext}}">
+      <view class="section-title">价格位置</view>
+      <view class="metrics">
+        <view class="metric"><text class="k">近3年分位</text><text class="v">{{stock.pricePctText}}</text></view>
+        <view class="metric"><text class="k">季线 MA60</text><text class="v">{{stock.ma60Text}}</text></view>
+        <view class="metric"><text class="k">年线 MA250</text><text class="v">{{stock.ma250Text}}</text></view>
+        <view class="metric"><text class="k">250日低</text><text class="v">{{stock.low250Text}}</text></view>
+        <view class="metric"><text class="k">250日高</text><text class="v">{{stock.high250Text}}</text></view>
+        <view class="metric"><text class="k">站上年线</text><text class="v">{{stock.aboveMa250 ? '是' : '否'}}</text></view>
+      </view>
+    </view>
+    <view class="card warn" wx:if="{{stock.invalidations.length}}">
+      <view class="section-title">区间失效条件</view>
+      <view class="warn-item" wx:for="{{stock.invalidations}}" wx:key="*this">· {{item}}</view>
+      <view class="muted small mt">触发任一条，按价格机械加减仓的前提就变了，应重新评估逻辑。</view>
+    </view>
+    <view class="card">
+      <view class="section-title">近期公告 {{announcements.length}} 条</view>
+      <view wx:if="{{!announcements.length}}" class="muted">近 10 天无公告</view>
+      <view class="doc" wx:for="{{announcements}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <text class="doc-date muted">{{item.date}}</text>
+        <text class="doc-title">{{item.title}}</text>
+      </view>
+    </view>
+    <view class="card">
+      <view class="section-title">券商研报 {{reports.length}} 篇</view>
+      <view wx:if="{{!reports.length}}" class="muted">近 12 个月无覆盖</view>
+      <view class="doc" wx:for="{{reports}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <view class="row between">
+          <text class="doc-date muted">{{item.date}}</text>
+          <text class="org">{{item.org}}</text>
+        </view>
+        <text class="doc-title">{{item.title}}</text>
+        <text class="muted small" wx:if="{{item.epsThisYear || item.epsNextYear}}">预测 EPS {{item.epsThisYear || '-'}} → {{item.epsNextYear || '-'}}</text>
+      </view>
+      <view class="muted small mt">点任意一条复制原文链接，在浏览器里打开。</view>
+    </view>
+    <view class="disclaimer">数据来自公开接口，区间为历史估值分位反推的结果，仅供参考，不构成投资建议。</view>
+  </block>
+</view>

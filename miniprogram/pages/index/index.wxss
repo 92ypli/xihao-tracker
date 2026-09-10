@@ -1,0 +1,212 @@
+.sector-name {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.tag {
+  font-size: 20rpx;
+  color: #38bdf8;
+  border: 1rpx solid #38bdf8;
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  margin-left: 12rpx;
+}
+
+.small {
+  font-size: 24rpx;
+}
+
+.gap {
+  gap: 20rpx;
+}
+
+.baseline {
+  align-items: baseline;
+  margin-top: 18rpx;
+}
+
+.big {
+  font-size: 60rpx;
+  font-weight: 700;
+}
+
+.num {
+  font-size: 30rpx;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 22rpx;
+  border-top: 1rpx solid #334155;
+  padding-top: 20rpx;
+}
+
+.metric {
+  width: 33.33%;
+  margin-bottom: 14rpx;
+}
+
+.metric .k {
+  display: block;
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.metric .v {
+  display: block;
+  font-size: 28rpx;
+  margin-top: 4rpx;
+}
+
+.entry-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+
+.sorts {
+  display: flex;
+  gap: 8rpx;
+}
+
+.sort {
+  font-size: 22rpx;
+  color: #94a3b8;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: #0f172a;
+}
+
+.sort.on {
+  color: #0f172a;
+  background: #38bdf8;
+}
+
+.list {
+  margin-top: 8rpx;
+}
+
+.item {
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #334155;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item.focus {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.08), transparent);
+}
+
+.item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.name-wrap {
+  flex: 1;
+}
+
+.name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.code {
+  font-size: 22rpx;
+  margin-left: 12rpx;
+}
+
+.focus-tag {
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.badge {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  color: #0f172a;
+}
+
+.badge.buy {
+  background: #ef4444;
+}
+
+.badge.hold {
+  background: #64748b;
+  color: #f1f5f9;
+}
+
+.badge.trim {
+  background: #22c55e;
+}
+
+.badge.na {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.item-mid {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+.price {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.chg {
+  font-size: 26rpx;
+}
+
+.pct {
+  font-size: 24rpx;
+  margin-left: auto;
+}
+
+.item-bot {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+}
+
+.item-bot .hl {
+  color: #e2e8f0;
+}
+
+.sep {
+  margin: 0 14rpx;
+  color: #334155;
+}
+
+.foot {
+  margin-top: 20rpx;
+}
+
+.sync-btn {
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 28rpx;
+  border-radius: 14rpx;
+}
+
+.disclaimer {
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.hint {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.7;
+}

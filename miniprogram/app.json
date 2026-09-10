@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/stock/stock",
+    "pages/reports/reports"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#0f172a",
+    "navigationBarTitleText": "喜好跟踪",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f172a",
+    "enablePullDownRefresh": true
+  },
+  "cloud": true,
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

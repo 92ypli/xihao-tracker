@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>喜好跟踪</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --line:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
+    --up:#ef4444; --down:#22c55e; --accent:#38bdf8; --warn:#fbbf24;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding:12px 12px calc(40px + env(safe-area-inset-bottom));
+    max-width:820px;margin:0 auto;
+  }
+  .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px}
+  .row{display:flex;align-items:center}
+  .between{justify-content:space-between}
+  .muted{color:var(--muted)}
+  .dim{color:var(--dim)}
+  .up{color:var(--up)} .down{color:var(--down)}
+  .small{font-size:12px}
+  h1{font-size:18px;margin:0 0 2px}
+  h2{font-size:15px;margin:0 0 12px;font-weight:600}
+  .tag{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:1px 6px;margin-left:8px}
+  .big{font-size:34px;font-weight:700}
+  .metrics{display:flex;flex-wrap:wrap;margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .metric{width:33.33%;margin-bottom:8px}
+  .metric .k{display:block;font-size:11px;color:var(--muted)}
+  .metric .v{display:block;font-size:15px;margin-top:2px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .tab{font-size:12px;color:var(--muted);background:var(--bg);border-radius:999px;padding:4px 12px;cursor:pointer;border:1px solid transparent}
+  .tab.on{color:#0f172a;background:var(--accent);font-weight:600}
+  .item{border-bottom:1px solid var(--line);padding:12px 0;cursor:pointer}
+  .item:last-child{border-bottom:none}
+  .item.focus{background:linear-gradient(90deg,rgba(56,189,248,.09),transparent)}
+  .name{font-size:15px;font-weight:600}
+  .code{font-size:12px;color:var(--dim);margin-left:8px}
+  .badge{font-size:11px;padding:2px 9px;border-radius:999px;color:#0f172a;white-space:nowrap}
+  .badge.buy{background:var(--up)} .badge.hold{background:#64748b;color:#f1f5f9}
+  .badge.trim{background:var(--down)} .badge.na{background:#334155;color:var(--muted)}
+  .price{font-size:17px;font-weight:600}
+  .line2{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+  .line3{margin-top:6px;font-size:12px;color:var(--muted)}
+  .hl{color:var(--text)}
+  .sep{margin:0 8px;color:var(--line)}
+  .detail{background:#16233a;border-radius:12px;padding:14px;margin:4px 0 10px;font-size:13px}
+  .bars{display:flex;gap:10px;margin-bottom:12px}
+  .band{flex:1;background:var(--bg);border-radius:10px;padding:12px;border-left:4px solid var(--dim)}
+  .band.buy{border-left-color:var(--up)} .band.trim{border-left-color:var(--down)}
+  .band .k{font-size:11px;color:var(--muted)}
+  .band .v{font-size:22px;font-weight:700;margin:2px 0}
+  .band.buy .v{color:var(--up)} .band.trim .v{color:var(--down)}
+  .band .s{font-size:11px;color:var(--dim);line-height:1.5}
+  .bar{position:relative;display:flex;height:10px;margin:18px 0 6px}
+  .zone{height:10px}
+  .zone.buy{width:30%;background:var(--up);border-radius:999px 0 0 999px}
+  .zone.hold{width:40%;background:#475569}
+  .zone.trim{width:30%;background:var(--down);border-radius:0 999px 999px 0}
+  .cursor{position:absolute;top:-5px;width:2px;height:20px;background:#fff;border-radius:1px}
+  .legend{display:flex;justify-content:space-between;font-size:11px;color:var(--dim)}
+  .doc{padding:8px 0;border-bottom:1px solid var(--line)}
+  .doc:last-child{border-bottom:none}
+  .doc a{color:var(--text);text-decoration:none}
+  .org{color:var(--accent);font-size:12px}
+  .warnbox{border-left:4px solid var(--warn);background:#16233a;border-radius:10px;padding:12px;font-size:13px;margin-bottom:10px}
+  .warnbox .w{color:var(--warn);line-height:1.7}
+  .cat{display:flex;padding:8px 0;border-bottom:1px solid var(--line)}
+  .cat:last-child{border-bottom:none}
+  .cat .l{width:92px;flex-shrink:0}
+  .cat .d{color:var(--accent);font-weight:600}
+  .foot{text-align:center;font-size:11px;color:var(--dim);line-height:1.7;margin-top:20px}
+  .empty{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function(){
+  var snap = JSON.parse(document.getElementById("data").textContent);
+  var focus = snap.focus || [];
+  var sort = "pct", filter = "all", openCode = null;
+
+  function f2(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(2); }
+  function fp(v){ return (v==null||isNaN(v)) ? "-" : Number(v).toFixed(1)+"%"; }
+  function sg(v){ return (v==null||isNaN(v)) ? "-" : (v>0?"+":"")+Number(v).toFixed(2); }
+  function cap(v){ return v ? (v/1e8).toFixed(0)+"亿" : "-"; }
+  function tone(v){ return v>0?"up":v<0?"down":""; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  function decorate(s){
+    var v = s.valuation || {};
+    var ok = v.ok;
+    return {
+      code:s.code, name:s.name, price:s.price, chgPct:s.chgPct,
+      peTtm:s.peTtm, pb:s.pb, totalCap:s.totalCap,
+      pct: ok ? v.compositePct : null,
+      pePct: v.pePct, pbPct: v.pbPct, psPct: v.psPct,
+      bands: s.bands, status: s.status, valuation: v,
+      consensus: s.consensus, priceContext: s.priceContext,
+      invalids: s.invalidations || [],
+      isFocus: focus.indexOf(s.code) >= 0
+    };
+  }
+
+  function sortFn(a,b){
+    if (a.isFocus !== b.isFocus) return a.isFocus ? -1 : 1;
+    if (sort === "chg") return (b.chgPct||0)-(a.chgPct||0);
+    if (sort === "cap") return (b.totalCap||0)-(a.totalCap||0);
+    return (a.pct==null?999:a.pct)-(b.pct==null?999:b.pct);
+  }
+
+  function pass(s){
+    if (filter === "focus") return s.isFocus;
+    if (filter === "low") return s.pct != null && s.pct < 30;
+    if (filter === "high") return s.pct != null && s.pct > 70;
+    return true;
+  }
+
+  function detailHtml(s){
+    var d = (snap.details||{})[s.code] || {};
+    var h = ['<div class="detail">'];
+
+    if (s.bands) {
+      h.push('<div class="bars">');
+      h.push('<div class="band buy"><div class="k">加仓价</div><div class="v">'+f2(s.bands.addPrice)+'</div>'
+        +'<div class="s">低于此价进入加仓区<br>区间 '+f2(s.bands.addLow)+' ~ '+f2(s.bands.addHigh)+'</div></div>');
+      h.push('<div class="band trim"><div class="k">减仓价</div><div class="v">'+f2(s.bands.trimPrice)+'</div>'
+        +'<div class="s">高于此价进入减仓区<br>区间 '+f2(s.bands.trimLow)+' ~ '+f2(s.bands.trimHigh)+'</div></div>');
+      h.push('</div>');
+      h.push('<div class="legend"><span>距加仓价 '+sg(s.bands.toAddPricePct)+'%</span><span>距减仓价 '+sg(s.bands.toTrimPricePct)+'%</span></div>');
+    } else {
+      h.push('<div class="empty">区间：'+esc(s.valuation.reason||"数据不足")+'</div>');
+    }
+
+    if (s.pct != null) {
+      h.push('<div class="bar"><div class="zone buy"></div><div class="zone hold"></div><div class="zone trim"></div>'
+        +'<div class="cursor" style="left:'+Math.max(0,Math.min(100,s.pct))+'%"></div></div>');
+      h.push('<div class="legend"><span>加仓区</span><span>持有区</span><span>减仓区</span></div>');
+    }
+
+    h.push('<div class="metrics">');
+    h.push('<div class="metric"><span class="k">PE 分位</span><span class="v">'+fp(s.pePct)+'</span></div>');
+    h.push('<div class="metric"><span class="k">PB 分位</span><span class="v">'+fp(s.pbPct)+'</span></div>');
+    h.push('<div class="metric"><span class="k">PS 分位</span><span class="v">'+fp(s.psPct)+'</span></div>');
+    h.push('</div>');
+
+    if (s.consensus && s.consensus.count) {
+      var c = s.consensus;
+      h.push('<div class="metrics">');
+      h.push('<div class="metric"><span class="k">覆盖报告</span><span class="v">'+c.count+' 篇</span></div>');
+      h.push('<div class="metric"><span class="k">今年 EPS</span><span class="v">'+(c.epsThisYear||"-")+'</span></div>');
+      h.push('<div class="metric"><span class="k">明年 EPS</span><span class="v">'+(c.epsNextYear||"-")+'</span></div>');
+      h.push('<div class="metric"><span class="k">今年预测 PE</span><span class="v">'+(c.peOnThisYear||"-")+'</span></div>');
+      h.push('<div class="metric"><span class="k">明年预测 PE</span><span class="v">'+(c.peOnNextYear||"-")+'</span></div>');
+      h.push('<div class="metric"><span class="k">预测趋势</span><span class="v">'
+        + ({up:"上调",down:"下调",flat:"持平"}[c.revTrend]||"-")+'</span></div>');
+      h.push('</div>');
+    }
+
+    var pc = s.priceContext;
+    if (pc) {
+      h.push('<div class="metrics">');
+      h.push('<div class="metric"><span class="k">近3年分位</span><span class="v">'+fp(pc.pricePct)+'</span></div>');
+      h.push('<div class="metric"><span class="k">季线 MA60</span><span class="v">'+f2(pc.ma60)+'</span></div>');
+      h.push('<div class="metric"><span class="k">年线 MA250</span><span class="v">'+f2(pc.ma250)+'</span></div>');
+      h.push('<div class="metric"><span class="k">250日低</span><span class="v">'+f2(pc.low250)+'</span></div>');
+      h.push('<div class="metric"><span class="k">250日高</span><span class="v">'+f2(pc.high250)+'</span></div>');
+      h.push('</div>');
+    }
+
+    if (s.invalids.length) {
+      h.push('<div class="warnbox"><b>区间失效条件</b>');
+      for (var i=0;i<s.invalids.length;i++) h.push('<div class="w">· '+esc(s.invalids[i])+'</div>');
+      h.push('<div class="s" style="color:#94a3b8;font-size:11px;margin-top:6px">触发任一条，按价格机械加减仓的前提就变了。</div></div>');
+    }
+
+    if (d.announcements && d.announcements.length) {
+      h.push('<h2 style="margin-top:12px">公告</h2>');
+      for (var j=0;j<d.announcements.length;j++){
+        var a = d.announcements[j];
+        h.push('<div class="doc"><span class="dim small">'+a.date+'</span><br><a href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.title)+'</a></div>');
+      }
+    }
+    if (d.reports && d.reports.length) {
+      h.push('<h2 style="margin-top:12px">机构报告</h2>');
+      for (var k=0;k<Math.min(6,d.reports.length);k++){
+        var r = d.reports[k];
+        h.push('<div class="doc"><span class="dim small">'+r.date+'</span> <span class="org">'+esc(r.org)+'</span><br>'
+          +'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.title)+'</a></div>');
+      }
+    }
+    h.push('</div>');
+    return h.join("");
+  }
+
+  function render(){
+    var s = snap.sector, idx = s.index;
+    var stocks = snap.stocks.map(decorate).sort(sortFn).filter(pass);
+    var h = [];
+
+    h.push('<div class="card">');
+    h.push('<div class="row between"><div><h1>喜好跟踪</h1>'
+      + '<span class="small dim">'+snap.tradeDate+'</span></div>'
+      + '<span class="small dim">'+new Date(snap.generatedAt).toLocaleString("zh-CN")+'</span></div>');
+    h.push('<div class="row" style="align-items:baseline;gap:12px;margin-top:10px">'
+      + '<span class="big '+tone(idx.chgPct)+'">'+f2(idx.price)+'</span>'
+      + '<span class="'+tone(idx.chgPct)+'">'+(sg(idx.chgPct))+'%</span>'
+      + '<span class="small dim">'+esc(idx.name)+(s.synthesized?' · 等权合成':'')+'</span></div>');
+    h.push('<div class="metrics">');
+    h.push('<div class="metric"><span class="k">近5日</span><span class="v '+tone(s.chg5)+'">'+(sg(s.chg5))+'%</span></div>');
+    h.push('<div class="metric"><span class="k">近20日</span><span class="v '+tone(s.chg20)+'">'+(sg(s.chg20))+'%</span></div>');
+    h.push('<div class="metric"><span class="k">涨跌家数</span><span class="v">'+s.breadth.up+'涨'+s.breadth.down+'跌</span></div>');
+    h.push('<div class="metric"><span class="k">距年线</span><span class="v '+tone(s.distToMa250Pct)+'">'+(sg(s.distToMa250Pct))+'%</span></div>');
+    h.push('<div class="metric"><span class="k">站上年线</span><span class="v">'
+      +(s.trendBreadth.ma250Total?s.trendBreadth.aboveMa250+"/"+s.trendBreadth.ma250Total:"-")+'</span></div>');
+    h.push('<div class="metric"><span class="k">站上季线</span><span class="v">'
+      +(s.trendBreadth.ma60Total?s.trendBreadth.aboveMa60+"/"+s.trendBreadth.ma60Total:"-")+'</span></div>');
+    h.push('</div></div>');
+
+    h.push('<div class="card"><h2>跟踪列表 '+stocks.length+' 只</h2>');
+    h.push('<div class="tabs">');
+    h.push('<span class="tab'+(filter==="all"?" on":"")+'" data-filter="all">全部</span>');
+    h.push('<span class="tab'+(filter==="focus"?" on":"")+'" data-filter="focus">重点</span>');
+    h.push('<span class="tab'+(filter==="low"?" on":"")+'" data-filter="low">低位区</span>');
+    h.push('<span class="tab'+(filter==="high"?" on":"")+'" data-filter="high">高位区</span>');
+    h.push('<span class="sep"></span>');
+    h.push('<span class="tab'+(sort==="pct"?" on":"")+'" data-sort="pct">分位</span>');
+    h.push('<span class="tab'+(sort==="chg"?" on":"")+'" data-sort="chg">涨幅</span>');
+    h.push('<span class="tab'+(sort==="cap"?" on":"")+'" data-sort="cap">市值</span>');
+    h.push('</div>');
+
+    for (var i=0;i<stocks.length;i++){
+      var x = stocks[i];
+      h.push('<div class="item'+(x.isFocus?" focus":"")+'" data-code="'+x.code+'">');
+      h.push('<div class="row between"><div class="row"><span class="name">'+esc(x.name)+'</span>'
+        +'<span class="code">'+x.code+'</span>'+(x.isFocus?'<span class="tag">重点</span>':'')+'</div>'
+        +'<span class="badge '+((x.status&&x.status.tone)||"na")+'">'+esc((x.status&&x.status.label)||"-")+'</span></div>');
+      h.push('<div class="line2"><span class="price '+tone(x.chgPct)+'">'+f2(x.price)+'</span>'
+        +'<span class="'+tone(x.chgPct)+'">'+sg(x.chgPct)+'%</span>'
+        +'<span class="small muted" style="margin-left:auto">分位 '+fp(x.pct)+'</span></div>');
+      h.push('<div class="line3">加仓 ≤ <span class="hl">'+(x.bands?f2(x.bands.addPrice):"-")+'</span>'
+        +'<span class="sep">|</span>减仓 ≥ <span class="hl">'+(x.bands?f2(x.bands.trimPrice):"-")+'</span>'
+        +'<span class="sep">|</span>PE '+(x.peTtm==null?"-":x.peTtm.toFixed(1))
+        +'<span class="sep">|</span>'+cap(x.totalCap)+'</div>');
+      h.push('</div>');
+      if (openCode === x.code) h.push(detailHtml(x));
+    }
+    h.push('</div>');
+
+    if (snap.catalysts && snap.catalysts.length){
+      h.push('<div class="card"><h2>日程提醒</h2>');
+      for (var c=0;c<snap.catalysts.length;c++){
+        var k = snap.catalysts[c];
+        h.push('<div class="cat"><div class="l"><div class="d">'+(k.daysAway===0?"今天":k.daysAway+" 天后")+'</div>'
+          +'<div class="dim small">'+k.date+'</div></div>'
+          +'<div><div>'+esc(k.title)+'</div><div class="dim small">'+esc(k.note)+'</div></div></div>');
+      }
+      h.push('</div>');
+    }
+
+    if (snap.industryReports && snap.industryReports.length){
+      h.push('<div class="card"><h2>行业报告</h2>');
+      for (var q=0;q<Math.min(10,snap.industryReports.length);q++){
+        var ir = snap.industryReports[q];
+        h.push('<div class="doc"><span class="dim small">'+ir.date+'</span> <span class="org">'+esc(ir.org)+'</span><br>'
+          +'<a href="'+esc(ir.url)+'" target="_blank" rel="noopener">'+esc(ir.title)+'</a></div>');
+      }
+      h.push('</div>');
+    }
+
+    h.push('<div class="foot">数据来自公开接口，区间由历史估值分位反推，仅作跟踪记录，不构成投资建议。<br>'
+      +'页面由 GitHub Actions 自动生成</div>');
+
+    document.getElementById("app").innerHTML = h.join("");
+  }
+
+  document.addEventListener("click", function(e){
+    var t = e.target.closest("[data-sort],[data-filter],.item");
+    if (!t) return;
+    if (t.dataset.sort){ sort = t.dataset.sort; render(); return; }
+    if (t.dataset.filter){ filter = t.dataset.filter; render(); return; }
+    if (t.dataset.code){
+      openCode = (openCode === t.dataset.code) ? null : t.dataset.code;
+      render();
+      var el = document.querySelector('[data-code="'+openCode+'"]');
+      if (el) el.scrollIntoView({block:"center",behavior:"smooth"});
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

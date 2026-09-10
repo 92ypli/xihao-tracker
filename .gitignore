@@ -1,0 +1,23 @@
+# 本地预览产物 / 抓取缓存
+work/
+data/cache/
+
+# 云函数的 lib 是 scripts/sync-lib.mjs 生成的，不进版本库
+cloudfunctions/api/lib/
+
+# 微信开发者工具生成的本地配置
+project.private.config.json
+
+# 依赖
+node_modules/
+
+# 密钥与本地配置
+.env
+.env.*
+*.local.json
+secrets.json
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini

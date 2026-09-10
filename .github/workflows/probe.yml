@@ -1,0 +1,18 @@
+name: 数据源自检
+
+# 手动触发一次，确认当前网络位置能否抓到数据接口。
+# 第一次用之前先跑这个，比等到定时任务失败再排查快得多。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 检查各数据源连通性
+        run: node scripts/probe.mjs

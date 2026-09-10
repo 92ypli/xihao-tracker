@@ -1,0 +1,50 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="card center muted">加载中…</view>
+  <view wx:elif="{{error}}" class="card center down">{{error}}</view>
+  <block wx:else>
+    <view class="card">
+      <view class="section-title">催化剂日历</view>
+      <view wx:if="{{!catalysts.length}}" class="muted">未来 60 天没有可自动识别的节点</view>
+      <view class="cat" wx:for="{{catalysts}}" wx:key="title">
+        <view class="cat-left">
+          <text class="cat-day">{{item.awayText}}</text>
+          <text class="muted small">{{item.date}}</text>
+        </view>
+        <view class="cat-right">
+          <text class="cat-title">{{item.title}}</text>
+          <text class="muted small">{{item.note}}</text>
+        </view>
+      </view>
+      <view class="muted small mt">新游定档、上线时间需要人工维护，后续可以在云数据库加一张 events 表接进来。</view>
+    </view>
+    <view class="card">
+      <view class="section-title">行业研报</view>
+      <view wx:if="{{!industryReports.length}}" class="muted">暂无</view>
+      <view class="doc" wx:for="{{industryReports}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <view class="row between">
+          <text class="doc-date muted">{{item.date}}</text>
+          <text class="org">{{item.org}}</text>
+        </view>
+        <text class="doc-title">{{item.title}}</text>
+      </view>
+    </view>
+    <view class="card" wx:for="{{groups}}" wx:key="code" wx:for-item="g">
+      <view class="section-title">{{g.name}} · {{g.code}}</view>
+      <view class="sub muted">公告</view>
+      <view wx:if="{{!g.announcements.length}}" class="muted small">近 10 天无公告</view>
+      <view class="doc" wx:for="{{g.announcements}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <text class="doc-date muted">{{item.date}}</text>
+        <text class="doc-title">{{item.title}}</text>
+      </view>
+      <view class="sub muted">研报</view>
+      <view class="doc" wx:for="{{g.reports}}" wx:key="url" data-url="{{item.url}}" bindtap="onCopy">
+        <view class="row between">
+          <text class="doc-date muted">{{item.date}}</text>
+          <text class="org">{{item.org}}</text>
+        </view>
+        <text class="doc-title">{{item.title}}</text>
+      </view>
+    </view>
+    <view class="disclaimer">点任意条目复制原文链接，在浏览器里打开。</view>
+  </block>
+</view>

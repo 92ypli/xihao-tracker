@@ -1,0 +1,16 @@
+{
+  "name": "xihao-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "喜好跟踪 - 每日自动抓取、计算区间、生成页面并推送",
+  "scripts": {
+    "probe": "node scripts/probe.mjs",
+    "daily": "node scripts/run-daily.mjs",
+    "preview": "node local-preview.mjs",
+    "sync-lib": "node scripts/sync-lib.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

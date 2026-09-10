@@ -1,0 +1,254 @@
+# 喜好跟踪
+
+每天收盘后自动抓数据、算区间、生成页面、推送摘要。全部跑在 GitHub 上，不需要服务器，不需要备案，不需要任何电脑常开。
+
+---
+
+## 它每天产出什么
+
+1. **一条推送**（钉钉 / 企业微信 / Server酱，配了才发）——板块概况、低位区名单、重点标的区间、当日新消息
+2. **一个网页**（GitHub Pages）——完整列表、标的详情、公告、报告、日程提醒
+3. **一份归档**——`reports/YYYY-MM-DD.md` 和 `data/history.jsonl`
+
+第三项别小看。`history.jsonl` 每天记录每只标的的估值分位和当时算出的区间，攒三个月就是一套现成的复盘素材，可以直接验证这套区间判断的命中率。
+
+---
+
+## 目录结构
+
+```
+xihao-tracker/
+├── .github/workflows/
+│   ├── probe.yml            手动触发：先测数据源通不通
+│   └── daily.yml            定时触发：每天 15:30（北京时间）
+├── src/                     核心逻辑（纯 Node，零依赖）
+│   ├── config.mjs           ★ 改跟踪范围、重点票、区间参数
+│   ├── http.mjs             带多域名回退的请求封装
+│   ├── eastmoney.mjs        数据源：行情 / 估值 / 公告 / 报告
+│   ├── analyze.mjs          估值分位、价格区间、板块温度
+│   ├── calendar.mjs         日程提醒
+│   ├── pipeline.mjs         总装
+│   └── report.mjs           Markdown 日报 + 推送文案
+├── scripts/
+│   ├── probe.mjs            数据源连通性自检
+│   ├── run-daily.mjs        每日任务入口
+│   └── sync-lib.mjs         src/ → 云函数（只有跑小程序时才需要）
+├── web/index.html           页面模板（单文件，无外部依赖）
+├── docs/index.html          生成物，GitHub Pages 就是发布它
+├── data/
+│   ├── latest.json          最新快照
+│   └── history.jsonl        每日区间记录
+├── reports/                 每日 Markdown 日报
+├── miniprogram/             小程序前端（可选，见文末）
+└── cloudfunctions/api/      小程序云函数（可选）
+```
+
+---
+
+## 部署步骤
+
+### 第 0 步：先确认数据源通不通
+
+这一步能帮你省掉一整天。
+
+GitHub 的服务器在海外，国内财经接口对海外 IP 的通达性是个变量。先把代码推上去，然后：
+
+**Actions → 数据源自检 → Run workflow**
+
+跑完会打印一张表，每个接口一行，标明耗时和结果。如果关键接口（板块成分股、估值历史）显示 `FAIL`，说明这条路走不通，直接跳到文末「如果海外节点抓不到」。
+
+### 第 1 步：建仓库
+
+GitHub → New repository → 名字随意（比如 `xihao-tracker`）→ 选 **Private** 或 Public 都行 → **不要**勾 Add README / .gitignore / license。
+
+### 第 2 步：推代码
+
+```powershell
+cd C:\Users\Administrator\Documents\Codex\2026-09-10\new-chat-2\outputs\xihao-tracker
+
+# 身份（没配过就要配一次）
+& "C:\Program Files\Git\cmd\git.exe" config --global user.email "你的GitHub邮箱"
+
+# 提交并推送
+& "C:\Program Files\Git\cmd\git.exe" add .
+& "C:\Program Files\Git\cmd\git.exe" commit -m "init: 喜好跟踪"
+& "C:\Program Files\Git\cmd\git.exe" remote add origin git@github.com:你的用户名/xihao-tracker.git
+& "C:\Program Files\Git\cmd\git.exe" push -u origin main
+```
+
+注意：这台机器 PATH 里的 `git` 是 2013 年的 1.8.1，连不上 GitHub。上面用的是完整路径指向 2.55.0。一劳永逸的修法是把 `C:\Program Files\Git\cmd` 移到环境变量 Path 的最前面。
+
+### 第 3 步：开启 Pages
+
+仓库 → **Settings → Pages**：
+
+| 项 | 值 |
+|---|---|
+| Source | Deploy from a branch |
+| Branch | `main` |
+| Folder | `/docs` |
+
+保存后，你的页面地址是：
+
+```
+https://你的用户名.github.io/xihao-tracker/
+```
+
+第一次要等一两分钟才生效。在手机浏览器打开，用「添加到主屏幕」，之后就是独立图标、全屏打开。
+
+### 第 4 步：授权 Actions 写入
+
+仓库 → **Settings → Actions → General** → 拉到最下面 → Workflow permissions → 选 **Read and write permissions** → Save。
+
+不设这一步，定时任务跑完没法把结果提交回来。
+
+### 第 5 步：配推送（可选但推荐）
+
+因为网页在国内的稳定性不保证，推送才是主力通道。
+
+**钉钉**：建一个只有自己的群 → 群设置 → 智能群助手 → 添加机器人 → 自定义 → 复制 Webhook 地址
+
+**企业微信**：建群 → 群机器人 → 添加 → 复制 Webhook 地址
+
+然后仓库 → **Settings → Secrets and variables → Actions → New repository secret**，名字用下面之一：
+
+| Secret 名 | 说明 |
+|---|---|
+| `DINGTALK_WEBHOOK` | 钉钉机器人完整 Webhook 地址 |
+| `WECOM_WEBHOOK` | 企业微信机器人完整 Webhook 地址 |
+| `SERVERCHAN_KEY` | Server酱的 SendKey |
+
+配几个都行，会同时发。一个都不配也能跑，只是不推送。
+
+钉钉机器人有安全设置，如果选了「自定义关键词」，把关键词设成 `喜好跟踪`，不然消息会被拒。
+
+### 第 6 步：先手动跑一次
+
+**Actions → 每日任务 → Run workflow**。
+
+跑完检查三件事：
+
+1. Actions 日志里出现 24 行标的表格
+2. 仓库里多了 `data/`、`reports/`、`docs/`
+3. 手机收到推送（如果配了）
+
+都没问题，之后每天北京时间 15:30 会自动跑。
+
+---
+
+## 怎么改
+
+改跟踪范围、重点票、区间参数，只需要动 `src/config.mjs`：
+
+```js
+export const CONFIG = {
+  board: { code: "BK1046", name: "游戏", industryCode: 1046 },
+  focus: ["002555", "002517"],          // 重点跟踪的标的
+  valuation: {
+    lookbackYears: 5,                    // 估值分位回看几年
+    bands: { addLow: 15, addHigh: 30, trimLow: 70, trimHigh: 85 },
+  },
+};
+```
+
+换板块改 `board.code`（东财行业板块代码）和 `industryCode`（报告的行业代码）。
+
+---
+
+## 加仓价 / 减仓价是怎么算的
+
+核心假设：盈利预期不变时，估值分位决定合理价格。
+
+```
+目标价 = 现价 × (历史某分位的估值 / 当前估值)
+```
+
+PE、PB、PS 三个口径各算一遍再加权（PB 权重最高，因为这类标的盈利周期波动大，PE 容易失真），最后看综合分位落在哪里：
+
+- 低于 30% → **加仓区**
+- 30% 到 70% → **持有区**
+- 高于 70% → **减仓区**
+
+### 两层护栏
+
+第一层，**2%/98% 截尾**。历史盈利低谷期的极端 PE 会把分位带歪——实测中曾出现减仓价算到现价的 4 倍，就是这个问题。
+
+第二层，**合理性剔除**。某个口径反推的减仓价超过现价 2.2 倍、或加仓价低于现价 0.45 倍，说明这个口径在当前不适用，直接弃用，权重分给其余口径。三个口径都不合格时显示「数据不足」，而不是硬给一个数。
+
+### 失效条件
+
+区间只在基本面没变的前提下成立。页面上会列出触发条件：
+
+- PE(TTM) 转负
+- 跌破年线
+- 机构近 3 个月下调盈利预测
+
+触发任一条，就不要按价格机械加减仓。
+
+---
+
+## 数据源
+
+| 内容 | 来源 | 成本 |
+|---|---|---|
+| 板块成分股 / 实时行情 | 东方财富 | 免费 |
+| 估值历史（PE/PB/PS，5 年日频） | 东方财富数据中心 | 免费 |
+| 公告 | 东方财富 | 免费 |
+| 报告标题与盈利预测 | 东方财富 | 免费（正文需付费） |
+| 板块指数日线 | 东方财富 | 拉不到时用成分股等权合成 |
+
+### 已知限制
+
+- **报告只有标题和盈利预测，没有正文。**
+- **没有接入流水类数据**（第三方数据服务都是付费的）。
+- **新游定档 / 上线时间没有免费数据源**，需要人工维护。想接的话，可以在 `src/calendar.mjs` 里加一张事件表。
+- **版号公示日期是经验规律**（取每月 22 日），实际以官方公告为准。
+- **网页在国内的访问稳定性一般**，所以推送是主通道。
+- GitHub 的定时任务在高峰期可能延迟十几分钟，偶尔漏跑。
+
+---
+
+## 本地开发
+
+不用推代码就能跑全流程，需要 Node 20 以上：
+
+```bash
+npm run probe    # 数据源自检
+npm run daily    # 抓取 + 生成 docs/ + reports/ + data/
+npm run preview  # 只看终端表格
+```
+
+项目零依赖，不用 `npm install`。改完 `src/` 之后用 `npm run daily` 在本地验证，比等 GitHub 跑一次快得多。
+
+---
+
+## 如果海外节点抓不到
+
+`probe` 里两个关键接口都 `FAIL` 的话，把抓取挪到国内节点，页面仍然放 GitHub Pages：
+
+- 腾讯云函数 SCF 有长期免费额度，配定时触发器跑 `node scripts/run-daily.mjs`
+- 跑完用 GitHub API 把结果提交回仓库，或者直接发推送
+
+核心逻辑 `src/` 一行都不用改。真遇到了告诉我，我来接。
+
+---
+
+## 小程序（可选）
+
+`miniprogram/` + `cloudfunctions/api/` 是一套微信小程序前端，走微信云开发。
+
+它需要付费（云开发免费额度已经收紧，新建环境大约 20 元/月起），而且自用只能走体验版，不要提交审核。
+
+如果之后想用：填云开发环境 ID、上传云函数、把云函数超时改到 60 秒。上传前先跑一次：
+
+```bash
+npm run sync-lib
+```
+
+`cloudfunctions/api/lib/` 是 `src/` 的副本（云函数必须自包含），这个目录不进版本库。
+
+---
+
+## 免责声明
+
+所有数字由公开数据按固定规则计算得出，仅用于跟踪和记录，不构成投资建议。价格区间是基于历史估值统计的参考值，不是目标价，也不预测未来。
